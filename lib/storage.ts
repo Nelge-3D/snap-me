@@ -1,8 +1,11 @@
 // Persistance locale uniquement : pas de base de données, pas d'authentification.
-import type { Progress } from "./types";
+import type { Progress, Snap } from "./types";
 
 const STORAGE_KEY = "snapme:progress";
 export const DAILY_SNAP_QUOTA = 5;
+export const MAX_STORED_SNAPS = 50; // garde-fou contre un localStorage qui déborde
+
+const EMPTY_SNAPS: Snap[] = [];
 
 function todayString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -18,15 +21,34 @@ function defaultProgress(): Progress {
   };
 }
 
+// Cache mémoire : readRawProgress() renvoie la même référence d'objet tant que
+// le contenu du localStorage n'a pas changé. Indispensable pour
+// useSyncExternalStore, qui sinon croirait le store modifié à chaque rendu.
+let cache: { raw: string | null; progress: Progress } | null = null;
+
 function readRawProgress(): Progress {
   if (typeof window === "undefined") return defaultProgress();
+
+  let raw: string | null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultProgress();
-    return { ...defaultProgress(), ...JSON.parse(raw) } as Progress;
+    raw = window.localStorage.getItem(STORAGE_KEY);
   } catch {
-    return defaultProgress();
+    raw = null;
   }
+
+  if (cache && cache.raw === raw) return cache.progress;
+
+  let progress: Progress;
+  try {
+    progress = raw
+      ? ({ ...defaultProgress(), ...JSON.parse(raw) } as Progress)
+      : defaultProgress();
+  } catch {
+    progress = defaultProgress();
+  }
+
+  cache = { raw, progress };
+  return progress;
 }
 
 /** Lit la progression et applique la réinitialisation quotidienne du quota si besoin. */
@@ -42,12 +64,16 @@ export function getProgress(): Progress {
 }
 
 function saveProgress(progress: Progress): void {
-  if (typeof window === "undefined") return;
+  let raw: string | null = null;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    raw = JSON.stringify(progress);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEY, raw);
+    }
   } catch {
     // Stockage plein ou indisponible : on continue sans bloquer l'utilisateur.
   }
+  cache = { raw, progress };
   emitProgressChange();
 }
 
@@ -65,6 +91,25 @@ export function canSnapToday(): boolean {
 export function recordSnap(): Progress {
   const current = getProgress();
   const updated = { ...current, snapsToday: current.snapsToday + 1 };
+  saveProgress(updated);
+  return updated;
+}
+
+/** Ajoute un snap en tête du carnet, en limitant le nombre d'entrées conservées. */
+export function saveSnapToHistory(snap: Snap): Progress {
+  const current = getProgress();
+  const snaps = [snap, ...current.snaps].slice(0, MAX_STORED_SNAPS);
+  const updated = { ...current, snaps };
+  saveProgress(updated);
+  return updated;
+}
+
+export function deleteSnapFromHistory(id: string): Progress {
+  const current = getProgress();
+  const updated = {
+    ...current,
+    snaps: current.snaps.filter((s) => s.id !== id),
+  };
   saveProgress(updated);
   return updated;
 }
@@ -96,4 +141,12 @@ export function getRemainingSnapsSnapshot(): number {
 
 export function getRemainingSnapsServerSnapshot(): number {
   return DAILY_SNAP_QUOTA;
+}
+
+export function getSnapsSnapshot(): Snap[] {
+  return getProgress().snaps;
+}
+
+export function getSnapsServerSnapshot(): Snap[] {
+  return EMPTY_SNAPS;
 }

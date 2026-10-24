@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { compressImage } from "@/lib/compressImage";
 import type { SnapResult } from "@/lib/types";
@@ -14,6 +15,7 @@ import {
   getXpServerSnapshot,
   getXpSnapshot,
   recordSnap,
+  saveSnapToHistory,
   subscribeProgress,
 } from "@/lib/storage";
 
@@ -75,6 +77,12 @@ export default function Home() {
 
       const data: SnapResult = await res.json();
       recordSnap();
+      saveSnapToHistory({
+        ...data,
+        id: crypto.randomUUID(),
+        imageDataUrl: `data:${mimeType};base64,${base64}`,
+        createdAt: Date.now(),
+      });
       setResult(data);
       setSnapKey((k) => k + 1);
       setStatus("done");
@@ -102,9 +110,18 @@ export default function Home() {
           <h1 className="text-3xl font-bold tracking-tight">
             Snap <span className="text-accent">Me</span>
           </h1>
-          <span className="rounded-full bg-surface px-3 py-1 text-sm font-medium text-accent">
-            ⭐ {xp} XP
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-surface px-3 py-1 text-sm font-medium text-accent">
+              ⭐ {xp} XP
+            </span>
+            <Link
+              href="/carnet"
+              aria-label="Ouvrir le carnet"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-sm"
+            >
+              📖
+            </Link>
+          </div>
         </div>
         <p className="mt-2 text-sm text-muted">
           Photographie un objet autour de toi, apprends son nom en anglais.
