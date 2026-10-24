@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { compressImage } from "@/lib/compressImage";
 import type { SnapResult } from "@/lib/types";
+import { SpeakButton } from "@/components/SpeakButton";
 
 type Status = "idle" | "compressing" | "thinking" | "done" | "error";
 
@@ -134,19 +135,30 @@ export default function Home() {
               />
             )}
 
-            <div className="rounded-2xl bg-surface p-5">
-              <p className="text-sm text-muted">{result.objectFr}</p>
-              <h2 className="text-3xl font-bold text-accent">
-                {result.objectEn}
-              </h2>
-              <p className="mt-1 font-mono text-sm text-muted">{result.ipa}</p>
+            <div className="flex items-center gap-4 rounded-2xl bg-surface p-5">
+              <div className="flex-1">
+                <p className="text-sm text-muted">{result.objectFr}</p>
+                <h2 className="text-3xl font-bold text-accent">
+                  {result.objectEn}
+                </h2>
+                <p className="mt-1 font-mono text-sm text-muted">
+                  {result.ipa}
+                </p>
+              </div>
+              <SpeakButton text={result.objectEn} />
             </div>
 
             <div className="flex flex-col gap-3">
               {result.sentences.map((s, i) => (
-                <div key={i} className="rounded-2xl bg-surface p-4">
-                  <p className="text-base">{s.en}</p>
-                  <p className="text-sm text-muted">{s.fr}</p>
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-2xl bg-surface p-4"
+                >
+                  <div className="flex-1">
+                    <p className="text-base">{s.en}</p>
+                    <p className="text-sm text-muted">{s.fr}</p>
+                  </div>
+                  <SpeakButton text={s.en} size="sm" />
                 </div>
               ))}
             </div>
