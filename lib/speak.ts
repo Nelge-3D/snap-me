@@ -1,5 +1,8 @@
-// Synthèse vocale. Pour l'instant : window.speechSynthesis uniquement.
-// Kokoro (priorité 3) viendra se brancher devant cette fonction sans changer son contrat.
+// Synthèse vocale. Tente Kokoro (qualité, 100% navigateur), retombe sur
+// window.speechSynthesis en cas d'échec ou de navigateur non supporté
+// (ex: WebGPU indisponible sur Firefox). Ne bloque jamais l'interface.
+
+import { generateKokoroAudioUrl, type KokoroProgress } from "./kokoro";
 
 function getVoices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
   return new Promise((resolve) => {
@@ -24,8 +27,8 @@ function pickVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null 
   return byLangPrefix("en-gb") ?? byLangPrefix("en") ?? voices[0] ?? null;
 }
 
-/** Ne bloque jamais l'interface : résout même en cas d'échec ou d'absence de support. */
-export async function speak(text: string): Promise<void> {
+/** Repli : résout toujours, même en cas d'échec ou d'absence de support. */
+async function speakWithBrowserTts(text: string): Promise<void> {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
 
   const synth = window.speechSynthesis;
@@ -47,4 +50,37 @@ export async function speak(text: string): Promise<void> {
     synth.cancel();
     synth.speak(utterance);
   });
+}
+
+function playBlobUrl(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const audio = new Audio(url);
+    audio.onended = () => {
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+    audio.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Audio playback failed"));
+    };
+    audio.play().catch(reject);
+  });
+}
+
+/**
+ * Lit `text` à voix haute. Tente Kokoro en priorité (meilleure qualité,
+ * 100% navigateur), et retombe silencieusement sur window.speechSynthesis
+ * en cas d'échec. Ne bloque jamais l'interface : résout toujours.
+ */
+export async function speak(
+  text: string,
+  onKokoroProgress?: (p: KokoroProgress) => void
+): Promise<void> {
+  try {
+    const url = await generateKokoroAudioUrl(text, onKokoroProgress);
+    await playBlobUrl(url);
+  } catch (err) {
+    console.warn("Kokoro indisponible, repli sur la voix du navigateur:", err);
+    await speakWithBrowserTts(text);
+  }
 }
