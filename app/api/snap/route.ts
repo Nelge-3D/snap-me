@@ -1,8 +1,9 @@
 import { identifyObject } from "@/lib/gemma";
 import type { Level } from "@/lib/types";
 
-// Un appel vision à Gemma 4 dépasse régulièrement les 10s par défaut du plan Hobby.
-export const maxDuration = 60;
+// Un appel vision à Gemma 4 dépasse régulièrement les 10s par défaut du plan Hobby,
+// et parfois même 60s. On demande le maximum autorisé par le plan.
+export const maxDuration = 300;
 
 const VALID_LEVELS: Level[] = ["present", "past", "future"];
 
