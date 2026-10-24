@@ -27,3 +27,16 @@ export type Progress = {
 };
 
 export type SnapResult = Omit<Snap, "id" | "imageDataUrl" | "createdAt">;
+
+// Appel 1 (vision, rapide) : juste de quoi afficher le mot tout de suite.
+export type IdentifyResult = {
+  objectEn: string;
+  objectFr: string;
+  ipa: string;
+};
+
+// Appel 2 (texte seul, en arrière-plan) : le reste du contenu pédagogique.
+export type DetailsResult = {
+  sentences: { en: string; fr: string }[];
+  exercises: Exercise[];
+};

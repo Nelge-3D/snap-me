@@ -52,17 +52,14 @@ async function speakWithBrowserTts(text: string): Promise<void> {
   });
 }
 
+// L'URL est mise en cache par texte (voir kokoro.ts) pour que les clics
+// suivants sur le même mot soient instantanés : on ne la révoque donc jamais
+// ici, contrairement à un usage à usage unique.
 function playBlobUrl(url: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const audio = new Audio(url);
-    audio.onended = () => {
-      URL.revokeObjectURL(url);
-      resolve();
-    };
-    audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Audio playback failed"));
-    };
+    audio.onended = () => resolve();
+    audio.onerror = () => reject(new Error("Audio playback failed"));
     audio.play().catch(reject);
   });
 }

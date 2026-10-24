@@ -49,7 +49,11 @@ export default function Carnet() {
         </h1>
       </header>
 
-      <main className="w-full max-w-sm flex-1">
+      <main
+        className={`flex w-full max-w-sm flex-1 flex-col ${
+          snaps.length === 0 ? "justify-center" : ""
+        }`}
+      >
         {snaps.length === 0 && (
           <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface p-8 text-center">
             <p className="text-muted">
@@ -110,9 +114,7 @@ export default function Carnet() {
                 <h2 className="text-3xl font-bold text-accent">
                   {selected.objectEn}
                 </h2>
-                <p className="mt-1 font-mono text-sm text-muted">
-                  {selected.ipa}
-                </p>
+                <p className="mt-1 text-sm text-muted">{selected.ipa}</p>
               </div>
               <SpeakButton text={selected.objectEn} />
             </div>

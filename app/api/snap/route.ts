@@ -1,14 +1,12 @@
 import { identifyObject } from "@/lib/gemma";
-import type { Level } from "@/lib/types";
 
-// Un appel vision à Gemma 4 dépasse régulièrement les 10s par défaut du plan Hobby,
-// et parfois même 60s. On demande le maximum autorisé par le plan.
+// Appel 1 (identification seule) : quelques dizaines de tokens de sortie,
+// donc nettement plus rapide qu'une réponse complète. 300s par prudence,
+// mais la mesure réelle est loggée côté serveur ([gemma] identify: ...ms).
 export const maxDuration = 300;
 
-const VALID_LEVELS: Level[] = ["present", "past", "future"];
-
 export async function POST(request: Request) {
-  let body: { imageBase64?: string; mimeType?: string; level?: string };
+  let body: { imageBase64?: string; mimeType?: string };
   try {
     body = await request.json();
   } catch {
@@ -16,9 +14,6 @@ export async function POST(request: Request) {
   }
 
   const { imageBase64, mimeType } = body;
-  const level: Level = VALID_LEVELS.includes(body.level as Level)
-    ? (body.level as Level)
-    : "present";
 
   if (!imageBase64 || !mimeType) {
     return Response.json(
@@ -28,9 +23,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await identifyObject(imageBase64, mimeType, level);
+    const result = await identifyObject(imageBase64, mimeType);
 
-    if (result.objectEn === "unknown" || result.sentences.length === 0) {
+    if (result.objectEn === "unknown") {
       return Response.json(
         {
           error:
@@ -42,7 +37,7 @@ export async function POST(request: Request) {
 
     return Response.json(result);
   } catch (err) {
-    console.error("Gemma call failed:", err);
+    console.error("Gemma call failed (identify):", err);
     return Response.json(
       { error: "Could not identify the object. Please try again." },
       { status: 502 }

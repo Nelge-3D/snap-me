@@ -13,6 +13,13 @@ export type KokoroProgress = {
 
 let instancePromise: Promise<KokoroTTS> | null = null;
 
+// Le modèle est mis en cache (instancePromise), mais générer l'audio d'un
+// texte est lui-même coûteux (inférence neuronale) : sans ce cache, cliquer
+// deux fois sur "flower" relance toute la synthèse vocale à chaque fois,
+// alors que le résultat est strictement identique. On garde l'URL de blob en
+// mémoire pour que le deuxième clic (et les suivants) soit instantané.
+const audioCache = new Map<string, string>();
+
 function loadKokoro(
   onProgress?: (p: KokoroProgress) => void
 ): Promise<KokoroTTS> {
@@ -35,12 +42,21 @@ function loadKokoro(
   return instancePromise;
 }
 
-/** Génère l'audio et renvoie une URL de blob à lire. Rejette si Kokoro est indisponible. */
+/**
+ * Génère l'audio et renvoie une URL de blob à lire, en réutilisant le
+ * résultat d'un appel précédent pour le même texte. Rejette si Kokoro est
+ * indisponible.
+ */
 export async function generateKokoroAudioUrl(
   text: string,
   onProgress?: (p: KokoroProgress) => void
 ): Promise<string> {
+  const cached = audioCache.get(text);
+  if (cached) return cached;
+
   const tts = await loadKokoro(onProgress);
   const audio = await tts.generate(text, { voice: VOICE });
-  return URL.createObjectURL(audio.toBlob());
+  const url = URL.createObjectURL(audio.toBlob());
+  audioCache.set(text, url);
+  return url;
 }

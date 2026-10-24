@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { compressImage } from "@/lib/compressImage";
-import type { SnapResult } from "@/lib/types";
+import type { DetailsResult, IdentifyResult } from "@/lib/types";
 import { SpeakButton } from "@/components/SpeakButton";
 import { ExerciseCard } from "@/components/ExerciseCard";
 import { LevelSelector } from "@/components/LevelSelector";
@@ -22,14 +22,33 @@ import {
   subscribeProgress,
 } from "@/lib/storage";
 
-type Status = "idle" | "compressing" | "thinking" | "done" | "error";
+type Status =
+  | "idle"
+  | "compressing"
+  | "identifying"
+  | "detailing"
+  | "done"
+  | "error";
+
+// Gemma 4 peut mettre plusieurs secondes à répondre : on fait tourner des
+// messages plutôt que de laisser un texte figé, pour que l'attente se sente
+// vivante même quand elle est réellement longue.
+const THINKING_MESSAGES = [
+  "Gemma 4 regarde ta photo...",
+  "Elle identifie l'objet...",
+  "La patience, un pas de plus vers l'anglais...",
+  "Presque prêt...",
+];
 
 export default function Home() {
   const [status, setStatus] = useState<Status>("idle");
   const [preview, setPreview] = useState<string | null>(null);
-  const [result, setResult] = useState<SnapResult | null>(null);
+  const [identified, setIdentified] = useState<IdentifyResult | null>(null);
+  const [details, setDetails] = useState<DetailsResult | null>(null);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [snapKey, setSnapKey] = useState(0);
+  const [thinkingMessageIndex, setThinkingMessageIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const xp = useSyncExternalStore(
@@ -52,28 +71,29 @@ export default function Home() {
     addXp(10);
   }
 
-  async function handleFile(file: File) {
-    if (!canSnapToday()) {
-      setError("Tu as utilisé tes 5 photos du jour. Reviens demain !");
-      setStatus("error");
-      return;
-    }
+  useEffect(() => {
+    if (status !== "identifying") return;
+    const interval = setInterval(() => {
+      setThinkingMessageIndex((i) =>
+        Math.min(i + 1, THINKING_MESSAGES.length - 1)
+      );
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [status]);
 
-    setError(null);
-    setResult(null);
-    setStatus("compressing");
-
+  async function fetchDetails(
+    idData: IdentifyResult,
+    thumbnailDataUrl: string
+  ) {
+    setDetailsError(null);
+    setStatus("detailing");
     try {
-      const { base64, mimeType } = await compressImage(file);
-      setPreview(`data:${mimeType};base64,${base64}`);
-
-      setStatus("thinking");
-      const res = await fetch("/api/snap", {
+      const res = await fetch("/api/snap/details", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imageBase64: base64,
-          mimeType,
+          objectEn: idData.objectEn,
+          objectFr: idData.objectFr,
           level,
         }),
       });
@@ -83,17 +103,68 @@ export default function Home() {
         throw new Error(body.error ?? "Erreur inconnue");
       }
 
-      const data: SnapResult = await res.json();
-      recordSnap();
+      const detData: DetailsResult = await res.json();
+      setDetails(detData);
+      setStatus("done");
+
       saveSnapToHistory({
-        ...data,
+        ...idData,
+        ...detData,
+        level,
         id: crypto.randomUUID(),
-        imageDataUrl: `data:${mimeType};base64,${base64}`,
+        imageDataUrl: thumbnailDataUrl,
         createdAt: Date.now(),
       });
-      setResult(data);
-      setSnapKey((k) => k + 1);
+    } catch (err) {
+      console.error(err);
+      // Le mot est déjà affiché : un échec ici ne doit pas tout effacer.
+      setDetailsError(
+        err instanceof Error ? err.message : "Erreur inconnue"
+      );
       setStatus("done");
+    }
+  }
+
+  async function handleFile(file: File) {
+    if (!canSnapToday()) {
+      setError("Tu as utilisé tes 5 photos du jour. Reviens demain !");
+      setStatus("error");
+      return;
+    }
+
+    setError(null);
+    setDetailsError(null);
+    setIdentified(null);
+    setDetails(null);
+    setThinkingMessageIndex(0);
+    setStatus("compressing");
+
+    try {
+      const { apiImage, thumbnail } = await compressImage(file);
+      const thumbnailDataUrl = `data:${thumbnail.mimeType};base64,${thumbnail.base64}`;
+      setPreview(thumbnailDataUrl);
+
+      setStatus("identifying");
+      const res = await fetch("/api/snap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageBase64: apiImage.base64,
+          mimeType: apiImage.mimeType,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Erreur inconnue");
+      }
+
+      const idData: IdentifyResult = await res.json();
+      recordSnap();
+      setIdentified(idData);
+      setSnapKey((k) => k + 1);
+
+      await fetchDetails(idData, thumbnailDataUrl);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -104,15 +175,17 @@ export default function Home() {
   function reset() {
     setStatus("idle");
     setPreview(null);
-    setResult(null);
+    setIdentified(null);
+    setDetails(null);
+    setDetailsError(null);
     setError(null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  const isBusy = status === "compressing" || status === "thinking";
+  const isBusy = status === "compressing" || status === "identifying";
 
   return (
-    <div className="flex flex-1 flex-col items-center px-4 py-10 sm:py-16">
+    <div className="flex min-h-full flex-1 flex-col items-center px-4 py-10 sm:py-16">
       <header className="mb-8 w-full max-w-sm text-center">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">
@@ -136,25 +209,25 @@ export default function Home() {
         </p>
       </header>
 
-      <main className="flex w-full max-w-sm flex-1 flex-col items-center gap-6">
-        {!result && (
+      <main
+        className={`flex w-full max-w-sm flex-1 flex-col items-center gap-6 ${
+          !identified ? "justify-center" : ""
+        }`}
+      >
+        {!identified && (
           <>
             <LevelSelector current={level} xp={xp} />
 
-            <div className="flex aspect-square w-full max-w-xs items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-surface">
-              {preview ? (
-                // eslint-disable-next-line @next/next/no-img-element
+            {preview && (
+              <div className="aspect-square w-full max-w-xs overflow-hidden rounded-3xl border border-white/10 bg-surface">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={preview}
                   alt="Photo prise"
                   className="h-full w-full object-cover"
                 />
-              ) : (
-                <span className="px-6 text-center text-sm text-muted">
-                  Ta photo apparaîtra ici
-                </span>
-              )}
-            </div>
+              </div>
+            )}
 
             <input
               ref={inputRef}
@@ -168,19 +241,24 @@ export default function Home() {
               }}
             />
 
-            <button
-              type="button"
-              disabled={isBusy || remainingSnaps === 0}
-              onClick={() => inputRef.current?.click()}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/30 transition-transform active:scale-95 disabled:opacity-60"
-              aria-label="Prendre une photo"
-            >
-              {isBusy ? (
-                <span className="h-6 w-6 animate-spin rounded-full border-2 border-accent-foreground/40 border-t-accent-foreground" />
-              ) : (
-                <span className="text-2xl">📸</span>
+            <div className="flex flex-col items-center gap-3">
+              <button
+                type="button"
+                disabled={isBusy || remainingSnaps === 0}
+                onClick={() => inputRef.current?.click()}
+                className="flex h-32 w-32 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-xl shadow-accent/30 transition-transform active:scale-95 disabled:opacity-60"
+                aria-label="Prendre une photo"
+              >
+                {isBusy ? (
+                  <span className="h-10 w-10 animate-spin rounded-full border-4 border-accent-foreground/40 border-t-accent-foreground" />
+                ) : (
+                  <span className="text-5xl">📸</span>
+                )}
+              </button>
+              {!isBusy && (
+                <p className="text-base font-medium">Prendre une photo</p>
               )}
-            </button>
+            </div>
 
             <p className="text-xs text-muted">
               {remainingSnaps > 0
@@ -190,7 +268,8 @@ export default function Home() {
 
             <p className="h-5 text-sm text-muted">
               {status === "compressing" && "Compression de la photo..."}
-              {status === "thinking" && "Gemma 4 regarde ta photo..."}
+              {status === "identifying" &&
+                THINKING_MESSAGES[thinkingMessageIndex]}
               {status === "error" && (
                 <span className="text-red-400">{error}</span>
               )}
@@ -198,54 +277,80 @@ export default function Home() {
           </>
         )}
 
-        {result && (
+        {identified && (
           <div className="flex w-full flex-col gap-5">
             {preview && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={preview}
-                alt={result.objectEn}
+                alt={identified.objectEn}
                 className="aspect-square w-full rounded-3xl object-cover"
               />
             )}
 
             <div className="flex items-center gap-4 rounded-2xl bg-surface p-5">
               <div className="flex-1">
-                <p className="text-sm text-muted">{result.objectFr}</p>
+                <p className="text-sm text-muted">{identified.objectFr}</p>
                 <h2 className="text-3xl font-bold text-accent">
-                  {result.objectEn}
+                  {identified.objectEn}
                 </h2>
-                <p className="mt-1 font-mono text-sm text-muted">
-                  {result.ipa}
-                </p>
+                <p className="mt-1 text-sm text-muted">{identified.ipa}</p>
               </div>
-              <SpeakButton text={result.objectEn} />
+              <SpeakButton text={identified.objectEn} />
             </div>
 
-            <div className="flex flex-col gap-3">
-              {result.sentences.map((s, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 rounded-2xl bg-surface p-4"
+            {status === "detailing" && (
+              <div className="flex flex-col gap-3">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="h-14 animate-pulse rounded-2xl bg-surface"
+                  />
+                ))}
+              </div>
+            )}
+
+            {detailsError && (
+              <div className="flex flex-col items-center gap-2 rounded-2xl bg-surface p-4 text-center">
+                <p className="text-sm text-red-400">{detailsError}</p>
+                <button
+                  type="button"
+                  onClick={() => preview && fetchDetails(identified, preview)}
+                  className="text-sm font-medium text-accent"
                 >
-                  <div className="flex-1">
-                    <p className="text-base">{s.en}</p>
-                    <p className="text-sm text-muted">{s.fr}</p>
-                  </div>
-                  <SpeakButton text={s.en} size="sm" />
-                </div>
-              ))}
-            </div>
+                  Réessayer
+                </button>
+              </div>
+            )}
 
-            <div className="flex flex-col gap-3">
-              {result.exercises.map((exercise, i) => (
-                <ExerciseCard
-                  key={`${snapKey}-${i}`}
-                  exercise={exercise}
-                  onCorrect={handleCorrectExercise}
-                />
-              ))}
-            </div>
+            {details && (
+              <>
+                <div className="flex flex-col gap-3">
+                  {details.sentences.map((s, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 rounded-2xl bg-surface p-4"
+                    >
+                      <div className="flex-1">
+                        <p className="text-base">{s.en}</p>
+                        <p className="text-sm text-muted">{s.fr}</p>
+                      </div>
+                      <SpeakButton text={s.en} size="sm" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {details.exercises.map((exercise, i) => (
+                    <ExerciseCard
+                      key={`${snapKey}-${i}`}
+                      exercise={exercise}
+                      onCorrect={handleCorrectExercise}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
 
             <button
               type="button"
