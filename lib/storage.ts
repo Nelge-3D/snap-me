@@ -1,11 +1,18 @@
 // Persistance locale uniquement : pas de base de données, pas d'authentification.
-import type { Progress, Snap } from "./types";
+import type { Level, Progress, Snap } from "./types";
 
 const STORAGE_KEY = "snapme:progress";
 export const DAILY_SNAP_QUOTA = 5;
 export const MAX_STORED_SNAPS = 50; // garde-fou contre un localStorage qui déborde
 
 const EMPTY_SNAPS: Snap[] = [];
+
+const LEVEL_ORDER: Level[] = ["present", "past", "future"];
+export const LEVEL_THRESHOLDS: Record<Level, number> = {
+  present: 0,
+  past: 50,
+  future: 150,
+};
 
 function todayString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -77,9 +84,35 @@ function saveProgress(progress: Progress): void {
   emitProgressChange();
 }
 
+export function isLevelUnlocked(level: Level, xp: number): boolean {
+  return xp >= LEVEL_THRESHOLDS[level];
+}
+
+export function getUnlockedLevels(xp: number): Level[] {
+  return LEVEL_ORDER.filter((l) => isLevelUnlocked(l, xp));
+}
+
+/** Ajoute de l'XP et fait progresser automatiquement le niveau courant s'il
+ * vient d'être débloqué (sans jamais le rétrograder). */
 export function addXp(amount: number): Progress {
-  const updated = { ...getProgress() };
-  updated.xp += amount;
+  const current = getProgress();
+  const xp = current.xp + amount;
+  const unlocked = getUnlockedLevels(xp);
+  const bestUnlocked = unlocked[unlocked.length - 1] ?? "present";
+  const level =
+    LEVEL_ORDER.indexOf(bestUnlocked) > LEVEL_ORDER.indexOf(current.level)
+      ? bestUnlocked
+      : current.level;
+  const updated = { ...current, xp, level };
+  saveProgress(updated);
+  return updated;
+}
+
+/** Change le niveau de pratique courant ; ignoré si ce niveau n'est pas encore débloqué. */
+export function setLevel(level: Level): Progress {
+  const current = getProgress();
+  if (!isLevelUnlocked(level, current.xp)) return current;
+  const updated = { ...current, level };
   saveProgress(updated);
   return updated;
 }
@@ -149,4 +182,12 @@ export function getSnapsSnapshot(): Snap[] {
 
 export function getSnapsServerSnapshot(): Snap[] {
   return EMPTY_SNAPS;
+}
+
+export function getLevelSnapshot(): Level {
+  return getProgress().level;
+}
+
+export function getLevelServerSnapshot(): Level {
+  return "present";
 }

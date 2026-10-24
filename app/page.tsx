@@ -6,10 +6,13 @@ import { compressImage } from "@/lib/compressImage";
 import type { SnapResult } from "@/lib/types";
 import { SpeakButton } from "@/components/SpeakButton";
 import { ExerciseCard } from "@/components/ExerciseCard";
+import { LevelSelector } from "@/components/LevelSelector";
 import {
   DAILY_SNAP_QUOTA,
   addXp,
   canSnapToday,
+  getLevelServerSnapshot,
+  getLevelSnapshot,
   getRemainingSnapsServerSnapshot,
   getRemainingSnapsSnapshot,
   getXpServerSnapshot,
@@ -39,6 +42,11 @@ export default function Home() {
     getRemainingSnapsSnapshot,
     getRemainingSnapsServerSnapshot
   );
+  const level = useSyncExternalStore(
+    subscribeProgress,
+    getLevelSnapshot,
+    getLevelServerSnapshot
+  );
 
   function handleCorrectExercise() {
     addXp(10);
@@ -66,7 +74,7 @@ export default function Home() {
         body: JSON.stringify({
           imageBase64: base64,
           mimeType,
-          level: "present",
+          level,
         }),
       });
 
@@ -131,6 +139,8 @@ export default function Home() {
       <main className="flex w-full max-w-sm flex-1 flex-col items-center gap-6">
         {!result && (
           <>
+            <LevelSelector current={level} xp={xp} />
+
             <div className="flex aspect-square w-full max-w-xs items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-surface">
               {preview ? (
                 // eslint-disable-next-line @next/next/no-img-element
