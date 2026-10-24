@@ -1,68 +1,165 @@
-import Image from "next/image";
+"use client";
+
+import { useRef, useState } from "react";
+import { compressImage } from "@/lib/compressImage";
+import type { SnapResult } from "@/lib/types";
+
+type Status = "idle" | "compressing" | "thinking" | "done" | "error";
 
 export default function Home() {
+  const [status, setStatus] = useState<Status>("idle");
+  const [preview, setPreview] = useState<string | null>(null);
+  const [result, setResult] = useState<SnapResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(file: File) {
+    setError(null);
+    setResult(null);
+    setStatus("compressing");
+
+    try {
+      const { base64, mimeType } = await compressImage(file);
+      setPreview(`data:${mimeType};base64,${base64}`);
+
+      setStatus("thinking");
+      const res = await fetch("/api/snap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageBase64: base64,
+          mimeType,
+          level: "present",
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Erreur inconnue");
+      }
+
+      const data: SnapResult = await res.json();
+      setResult(data);
+      setStatus("done");
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      setStatus("error");
+    }
+  }
+
+  function reset() {
+    setStatus("idle");
+    setPreview(null);
+    setResult(null);
+    setError(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  const isBusy = status === "compressing" || status === "thinking";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+    <div className="flex flex-1 flex-col items-center px-4 py-10 sm:py-16">
+      <header className="mb-8 text-center">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Snap <span className="text-accent">Me</span>
+        </h1>
+        <p className="mt-2 max-w-xs text-sm text-muted">
+          Photographie un objet autour de toi, apprends son nom en anglais.
+        </p>
+      </header>
+
+      <main className="flex w-full max-w-sm flex-1 flex-col items-center gap-6">
+        {!result && (
+          <>
+            <div className="flex aspect-square w-full max-w-xs items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-surface">
+              {preview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={preview}
+                  alt="Photo prise"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="px-6 text-center text-sm text-muted">
+                  Ta photo apparaîtra ici
+                </span>
+              )}
+            </div>
+
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => inputRef.current?.click()}
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/30 transition-transform active:scale-95 disabled:opacity-60"
+              aria-label="Prendre une photo"
+            >
+              {isBusy ? (
+                <span className="h-6 w-6 animate-spin rounded-full border-2 border-accent-foreground/40 border-t-accent-foreground" />
+              ) : (
+                <span className="text-2xl">📸</span>
+              )}
+            </button>
+
+            <p className="h-5 text-sm text-muted">
+              {status === "compressing" && "Compression de la photo..."}
+              {status === "thinking" && "Gemma 4 regarde ta photo..."}
+              {status === "error" && (
+                <span className="text-red-400">{error}</span>
+              )}
+            </p>
+          </>
+        )}
+
+        {result && (
+          <div className="flex w-full flex-col gap-5">
+            {preview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={preview}
+                alt={result.objectEn}
+                className="aspect-square w-full rounded-3xl object-cover"
+              />
+            )}
+
+            <div className="rounded-2xl bg-surface p-5">
+              <p className="text-sm text-muted">{result.objectFr}</p>
+              <h2 className="text-3xl font-bold text-accent">
+                {result.objectEn}
+              </h2>
+              <p className="mt-1 font-mono text-sm text-muted">{result.ipa}</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {result.sentences.map((s, i) => (
+                <div key={i} className="rounded-2xl bg-surface p-4">
+                  <p className="text-base">{s.en}</p>
+                  <p className="text-sm text-muted">{s.fr}</p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={reset}
+              className="mt-2 flex h-12 items-center justify-center rounded-full border border-accent/50 text-accent transition-colors active:bg-accent/10"
+            >
+              Reprendre une photo
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );
