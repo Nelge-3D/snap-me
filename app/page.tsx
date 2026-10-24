@@ -1,9 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { compressImage } from "@/lib/compressImage";
 import type { SnapResult } from "@/lib/types";
 import { SpeakButton } from "@/components/SpeakButton";
+import { ExerciseCard } from "@/components/ExerciseCard";
+import {
+  addXp,
+  getXpServerSnapshot,
+  getXpSnapshot,
+  subscribeXp,
+} from "@/lib/storage";
 
 type Status = "idle" | "compressing" | "thinking" | "done" | "error";
 
@@ -12,7 +19,18 @@ export default function Home() {
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<SnapResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [snapKey, setSnapKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const xp = useSyncExternalStore(
+    subscribeXp,
+    getXpSnapshot,
+    getXpServerSnapshot
+  );
+
+  function handleCorrectExercise() {
+    addXp(10);
+  }
 
   async function handleFile(file: File) {
     setError(null);
@@ -41,6 +59,7 @@ export default function Home() {
 
       const data: SnapResult = await res.json();
       setResult(data);
+      setSnapKey((k) => k + 1);
       setStatus("done");
     } catch (err) {
       console.error(err);
@@ -61,11 +80,16 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 flex-col items-center px-4 py-10 sm:py-16">
-      <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Snap <span className="text-accent">Me</span>
-        </h1>
-        <p className="mt-2 max-w-xs text-sm text-muted">
+      <header className="mb-8 w-full max-w-sm text-center">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Snap <span className="text-accent">Me</span>
+          </h1>
+          <span className="rounded-full bg-surface px-3 py-1 text-sm font-medium text-accent">
+            ⭐ {xp} XP
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-muted">
           Photographie un objet autour de toi, apprends son nom en anglais.
         </p>
       </header>
@@ -160,6 +184,16 @@ export default function Home() {
                   </div>
                   <SpeakButton text={s.en} size="sm" />
                 </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {result.exercises.map((exercise, i) => (
+                <ExerciseCard
+                  key={`${snapKey}-${i}`}
+                  exercise={exercise}
+                  onCorrect={handleCorrectExercise}
+                />
               ))}
             </div>
 
