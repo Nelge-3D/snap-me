@@ -37,6 +37,50 @@ Rules:
 - Output ONLY the JSON object. No markdown, no commentary.`;
 }
 
+/**
+ * Gemma est un petit modèle sans sortie structurée garantie : JSON.parse ne
+ * dit rien sur la forme du JSON. On ne fait confiance à rien de ce qu'il
+ * renvoie sans l'avoir vérifié champ par champ.
+ */
+function sanitize(parsed: unknown, level: Level): SnapResult {
+  const p = (parsed ?? {}) as Record<string, unknown>;
+  const str = (v: unknown, fallback = "") =>
+    typeof v === "string" ? v : fallback;
+
+  const sentences = Array.isArray(p.sentences)
+    ? p.sentences
+        .filter(
+          (s): s is Record<string, unknown> => !!s && typeof s === "object"
+        )
+        .map((s) => ({ en: str(s.en), fr: str(s.fr) }))
+        .filter((s) => s.en.length > 0)
+    : [];
+
+  const exercises = Array.isArray(p.exercises)
+    ? p.exercises
+        .filter(
+          (e): e is Record<string, unknown> => !!e && typeof e === "object"
+        )
+        .map((e) => ({
+          prompt: str(e.prompt),
+          answer: str(e.answer),
+          options: Array.isArray(e.options)
+            ? e.options.map((o) => str(o)).filter(Boolean)
+            : [],
+        }))
+        .filter((e) => e.prompt && e.answer && e.options.includes(e.answer))
+    : [];
+
+  return {
+    objectEn: str(p.objectEn, "unknown"),
+    objectFr: str(p.objectFr),
+    ipa: str(p.ipa),
+    sentences,
+    exercises,
+    level,
+  };
+}
+
 function extractJson(raw: string): string {
   const withoutFences = raw.replace(/```json/gi, "").replace(/```/g, "");
   const start = withoutFences.indexOf("{");
@@ -83,7 +127,7 @@ export async function identifyObject(
 
   const rawText = response.text ?? "";
   const jsonStr = extractJson(rawText);
-  const parsed = JSON.parse(jsonStr) as SnapResult;
+  const parsed: unknown = JSON.parse(jsonStr);
 
-  return { ...parsed, level };
+  return sanitize(parsed, level);
 }

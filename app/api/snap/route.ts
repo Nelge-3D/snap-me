@@ -1,6 +1,9 @@
 import { identifyObject } from "@/lib/gemma";
 import type { Level } from "@/lib/types";
 
+// Un appel vision à Gemma 4 dépasse régulièrement les 10s par défaut du plan Hobby.
+export const maxDuration = 60;
+
 const VALID_LEVELS: Level[] = ["present", "past", "future"];
 
 export async function POST(request: Request) {
@@ -25,6 +28,17 @@ export async function POST(request: Request) {
 
   try {
     const result = await identifyObject(imageBase64, mimeType, level);
+
+    if (result.objectEn === "unknown" || result.sentences.length === 0) {
+      return Response.json(
+        {
+          error:
+            "Aucun objet reconnu. Réessaie avec un seul objet bien visible.",
+        },
+        { status: 422 }
+      );
+    }
+
     return Response.json(result);
   } catch (err) {
     console.error("Gemma call failed:", err);
