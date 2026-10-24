@@ -2,6 +2,7 @@
 import type { Progress } from "./types";
 
 const STORAGE_KEY = "snapme:progress";
+export const DAILY_SNAP_QUOTA = 5;
 
 function todayString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -17,7 +18,7 @@ function defaultProgress(): Progress {
   };
 }
 
-export function getProgress(): Progress {
+function readRawProgress(): Progress {
   if (typeof window === "undefined") return defaultProgress();
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -28,6 +29,18 @@ export function getProgress(): Progress {
   }
 }
 
+/** Lit la progression et applique la réinitialisation quotidienne du quota si besoin. */
+export function getProgress(): Progress {
+  const progress = readRawProgress();
+  const today = todayString();
+  if (progress.lastSnapDate !== today) {
+    const reset = { ...progress, snapsToday: 0, lastSnapDate: today };
+    saveProgress(reset);
+    return reset;
+  }
+  return progress;
+}
+
 function saveProgress(progress: Progress): void {
   if (typeof window === "undefined") return;
   try {
@@ -35,7 +48,7 @@ function saveProgress(progress: Progress): void {
   } catch {
     // Stockage plein ou indisponible : on continue sans bloquer l'utilisateur.
   }
-  emitXpChange();
+  emitProgressChange();
 }
 
 export function addXp(amount: number): Progress {
@@ -45,17 +58,28 @@ export function addXp(amount: number): Progress {
   return updated;
 }
 
-// Synchronisation avec React via useSyncExternalStore (le xp peut être modifié
-// par n'importe quel composant, sans passer par un effet qui déclencherait un setState).
-const xpListeners = new Set<() => void>();
-
-function emitXpChange(): void {
-  for (const listener of xpListeners) listener();
+export function canSnapToday(): boolean {
+  return getProgress().snapsToday < DAILY_SNAP_QUOTA;
 }
 
-export function subscribeXp(listener: () => void): () => void {
-  xpListeners.add(listener);
-  return () => xpListeners.delete(listener);
+export function recordSnap(): Progress {
+  const current = getProgress();
+  const updated = { ...current, snapsToday: current.snapsToday + 1 };
+  saveProgress(updated);
+  return updated;
+}
+
+// Synchronisation avec React via useSyncExternalStore : la progression peut être
+// modifiée par n'importe quel composant, sans passer par un effet + setState.
+const progressListeners = new Set<() => void>();
+
+function emitProgressChange(): void {
+  for (const listener of progressListeners) listener();
+}
+
+export function subscribeProgress(listener: () => void): () => void {
+  progressListeners.add(listener);
+  return () => progressListeners.delete(listener);
 }
 
 export function getXpSnapshot(): number {
@@ -64,4 +88,12 @@ export function getXpSnapshot(): number {
 
 export function getXpServerSnapshot(): number {
   return 0;
+}
+
+export function getRemainingSnapsSnapshot(): number {
+  return Math.max(0, DAILY_SNAP_QUOTA - getProgress().snapsToday);
+}
+
+export function getRemainingSnapsServerSnapshot(): number {
+  return DAILY_SNAP_QUOTA;
 }

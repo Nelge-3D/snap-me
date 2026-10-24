@@ -6,10 +6,15 @@ import type { SnapResult } from "@/lib/types";
 import { SpeakButton } from "@/components/SpeakButton";
 import { ExerciseCard } from "@/components/ExerciseCard";
 import {
+  DAILY_SNAP_QUOTA,
   addXp,
+  canSnapToday,
+  getRemainingSnapsServerSnapshot,
+  getRemainingSnapsSnapshot,
   getXpServerSnapshot,
   getXpSnapshot,
-  subscribeXp,
+  recordSnap,
+  subscribeProgress,
 } from "@/lib/storage";
 
 type Status = "idle" | "compressing" | "thinking" | "done" | "error";
@@ -23,9 +28,14 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const xp = useSyncExternalStore(
-    subscribeXp,
+    subscribeProgress,
     getXpSnapshot,
     getXpServerSnapshot
+  );
+  const remainingSnaps = useSyncExternalStore(
+    subscribeProgress,
+    getRemainingSnapsSnapshot,
+    getRemainingSnapsServerSnapshot
   );
 
   function handleCorrectExercise() {
@@ -33,6 +43,12 @@ export default function Home() {
   }
 
   async function handleFile(file: File) {
+    if (!canSnapToday()) {
+      setError("Tu as utilisé tes 5 photos du jour. Reviens demain !");
+      setStatus("error");
+      return;
+    }
+
     setError(null);
     setResult(null);
     setStatus("compressing");
@@ -58,6 +74,7 @@ export default function Home() {
       }
 
       const data: SnapResult = await res.json();
+      recordSnap();
       setResult(data);
       setSnapKey((k) => k + 1);
       setStatus("done");
@@ -126,7 +143,7 @@ export default function Home() {
 
             <button
               type="button"
-              disabled={isBusy}
+              disabled={isBusy || remainingSnaps === 0}
               onClick={() => inputRef.current?.click()}
               className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/30 transition-transform active:scale-95 disabled:opacity-60"
               aria-label="Prendre une photo"
@@ -137,6 +154,12 @@ export default function Home() {
                 <span className="text-2xl">📸</span>
               )}
             </button>
+
+            <p className="text-xs text-muted">
+              {remainingSnaps > 0
+                ? `${remainingSnaps}/${DAILY_SNAP_QUOTA} photos aujourd'hui`
+                : "Quota du jour épuisé"}
+            </p>
 
             <p className="h-5 text-sm text-muted">
               {status === "compressing" && "Compression de la photo..."}
