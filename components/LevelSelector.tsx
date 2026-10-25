@@ -32,8 +32,8 @@ export function LevelSelector({
               isSelected
                 ? "border-accent text-accent-foreground"
                 : unlocked
-                  ? "border-white/15 text-foreground active:bg-white/5"
-                  : "border-white/10 text-muted"
+                  ? "border-surface-border text-foreground active:bg-black/5"
+                  : "border-surface-border text-muted"
             }`}
           >
             {isSelected && (

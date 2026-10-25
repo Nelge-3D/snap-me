@@ -40,6 +40,8 @@ Chaque photo est redimensionnée et réencodée en JPEG qualité 0.7 via un canv
 
 ## Captures d'écran
 
+L'interface a évolué vers une palette claire (fond quasi blanc, accent orange, texte sombre), plus lisible en plein soleil, un contexte d'usage fréquent pour une app mobile à Libreville.
+
 | Capture → identification | Phrases & exercices | Carnet |
 |---|---|---|
 | ![Écran d'accueil avec les niveaux présent/passé/futur](docs/screenshot-home.jpg) | ![Mot identifié avec phrases et bouton d'écoute](docs/screenshot-result.jpg) | ![Carnet des snaps passés](docs/screenshot-carnet.jpg) |

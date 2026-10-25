@@ -40,7 +40,7 @@ export function ExerciseCard({
         {exercise.options.map((option) => {
           const isThisCorrect = option === exercise.answer;
           const isThisSelected = option === selected;
-          let style = "border-white/15 text-foreground";
+          let style = "border-surface-border text-foreground";
           if (isAnswered && isThisCorrect) {
             style = "border-green-500 bg-green-500/15 text-green-400";
           } else if (isAnswered && isThisSelected) {

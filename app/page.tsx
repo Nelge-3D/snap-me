@@ -223,7 +223,7 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="aspect-square w-full max-w-xs overflow-hidden rounded-3xl border border-white/10 bg-surface"
+                className="aspect-square w-full max-w-xs overflow-hidden rounded-3xl border border-surface-border bg-surface"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
