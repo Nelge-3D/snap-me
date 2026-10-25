@@ -12,6 +12,11 @@ export type KokoroProgress = {
 };
 
 let instancePromise: Promise<KokoroTTS> | null = null;
+let loaded = false;
+
+export function isKokoroLoaded(): boolean {
+  return loaded;
+}
 
 // Le modèle est mis en cache (instancePromise), mais générer l'audio d'un
 // texte est lui-même coûteux (inférence neuronale) : sans ce cache, cliquer
@@ -24,22 +29,42 @@ function loadKokoro(
   onProgress?: (p: KokoroProgress) => void
 ): Promise<KokoroTTS> {
   if (!instancePromise) {
-    instancePromise = import("kokoro-js")
-      .then(({ KokoroTTS }) =>
-        KokoroTTS.from_pretrained(MODEL_ID, {
+    instancePromise = Promise.all([
+      import("kokoro-js"),
+      import("@huggingface/transformers"),
+    ])
+      .then(([{ KokoroTTS }, { env }]) => {
+        // Le calcul vocal tourne dans un worker : sans ça il fige la page
+        // pendant plusieurs secondes sur téléphone.
+        const wasm = env.backends.onnx.wasm;
+        if (wasm) wasm.proxy = true;
+        return KokoroTTS.from_pretrained(MODEL_ID, {
           dtype: "q8",
           device: "wasm",
           progress_callback: (p: { status: string; progress?: number }) => {
             onProgress?.({ status: p.status, progress: p.progress });
           },
-        })
-      )
+        });
+      })
+      .then((tts) => {
+        loaded = true;
+        return tts;
+      })
       .catch((err) => {
         instancePromise = null; // permet de réessayer au prochain clic
         throw err;
       });
   }
   return instancePromise;
+}
+
+/** Lance le chargement du modèle sans rien lire, pour que les clics suivants soient rapides. */
+export function preloadKokoro(): void {
+  loadKokoro().catch(() => {});
+}
+
+export function hasKokoroAudio(text: string): boolean {
+  return audioCache.has(text);
 }
 
 /**

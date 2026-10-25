@@ -21,7 +21,7 @@ On retient mieux un mot attaché à un objet de son propre quotidien qu'un mot p
 1. Tu prends ou choisis une photo d'un objet.
 2. L'image est redimensionnée et compressée dans le navigateur avant tout envoi.
 3. **Gemma 4** identifie l'objet et renvoie un JSON structuré : le mot anglais, sa transcription phonétique, trois phrases d'exemple au temps grammatical de ton niveau, et deux exercices à trous.
-4. Tu peux écouter la prononciation, construite par **Kokoro-82M**, un modèle de synthèse vocale qui tourne entièrement dans ton navigateur.
+4. Tu peux écouter la prononciation. La voix du navigateur démarre tout de suite, puis **Kokoro-82M**, un modèle de synthèse vocale qui tourne entièrement dans ton navigateur, prend le relais une fois son modèle (92 Mo) chargé en arrière-plan. Ce chargement se fait seulement en Wi-Fi ou sur ordinateur, jamais sans prévenir sur données mobiles. Un bouton animé indique chaque étape.
 5. Chaque exercice réussi rapporte de l'XP, qui débloque progressivement le passé puis le futur.
 6. Le snap est archivé dans un carnet stocké sur ton appareil.
 
@@ -62,7 +62,7 @@ L'interface a évolué vers une palette claire (fond quasi blanc, accent orange,
 - **Tailwind CSS v4**
 - **Space Grotesk** et **Manrope** (licence SIL OFL) pour la marque et la landing ; les fichiers de `assets/fonts` servent à dessiner l'image de partage
 - **Google Gemini API** pour accéder à Gemma 4 : clé API côté serveur uniquement, jamais exposée au client
-- **kokoro-js** pour la synthèse vocale dans le navigateur, avec repli automatique sur `window.speechSynthesis` si Kokoro est indisponible
+- **kokoro-js** pour la synthèse vocale dans le navigateur, calculée dans un worker pour ne pas figer la page. `window.speechSynthesis` donne la voix immédiate tant que Kokoro n'est pas prêt, ou s'il met plus de 2,5 s à répondre
 - **localStorage** pour toute la persistance (XP, niveau, quota, carnet)
 - Pas de base de données, pas d'authentification : une contrainte délibérée pour rester livrable dans le temps du hackathon
 
