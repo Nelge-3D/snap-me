@@ -36,7 +36,7 @@ Aucun service propriétaire fermé n'intervient dans le parcours d'un snap.
 
 ## Le choix de la compression d'image
 
-Chaque photo est redimensionnée à 768px sur le plus grand côté et réencodée en JPEG qualité 0.7, via un canvas, avant tout envoi réseau. Le réseau à Libreville est lent et les forfaits data se paient : envoyer une photo brute de plusieurs méga-octets à chaque snap est un défaut produit, pas un détail technique. C'est aussi pour ça que la voix tourne en local plutôt que de dépendre d'un aller-retour réseau à chaque écoute.
+Chaque photo est redimensionnée et réencodée en JPEG qualité 0.7 via un canvas, avant tout envoi réseau : une version à 512px part vers l'API (moins d'octets à envoyer, moins de tokens image à traiter côté modèle), une version à 768px reste affichée à l'écran et sauvegardée dans le carnet, où la qualité visuelle compte plus que la vitesse. Le réseau à Libreville est lent et les forfaits data se paient : envoyer une photo brute de plusieurs méga-octets à chaque snap est un défaut produit, pas un détail technique. C'est aussi pour ça que la voix tourne en local plutôt que de dépendre d'un aller-retour réseau à chaque écoute.
 
 ## Captures d'écran
 
