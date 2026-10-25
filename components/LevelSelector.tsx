@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import type { Level } from "@/lib/types";
 import { LEVEL_THRESHOLDS, isLevelUnlocked, setLevel } from "@/lib/storage";
 
@@ -27,15 +28,24 @@ export function LevelSelector({
             type="button"
             disabled={!unlocked}
             onClick={() => setLevel(value)}
-            className={`flex-1 rounded-full border px-2 py-2 text-xs font-medium transition-colors ${
+            className={`relative flex-1 overflow-hidden rounded-full border px-2 py-2 text-xs font-medium transition-colors ${
               isSelected
-                ? "border-accent bg-accent text-accent-foreground"
+                ? "border-accent text-accent-foreground"
                 : unlocked
                   ? "border-white/15 text-foreground active:bg-white/5"
                   : "border-white/10 text-muted"
             }`}
           >
-            {unlocked ? label : `🔒 ${LEVEL_THRESHOLDS[value]} XP`}
+            {isSelected && (
+              <motion.span
+                layoutId="level-pill"
+                className="absolute inset-0 bg-accent"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10">
+              {unlocked ? label : `🔒 ${LEVEL_THRESHOLDS[value]} XP`}
+            </span>
           </button>
         );
       })}

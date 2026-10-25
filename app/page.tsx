@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { compressImage } from "@/lib/compressImage";
 import type { DetailsResult, IdentifyResult } from "@/lib/types";
 import { SpeakButton } from "@/components/SpeakButton";
 import { ExerciseCard } from "@/components/ExerciseCard";
 import { LevelSelector } from "@/components/LevelSelector";
+import { Onboarding } from "@/components/Onboarding";
 import {
   DAILY_SNAP_QUOTA,
   addXp,
@@ -185,23 +186,23 @@ export default function Home() {
   const isBusy = status === "compressing" || status === "identifying";
 
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center px-4 py-10 sm:py-16">
+    <div className="flex min-h-full flex-1 flex-col items-center px-4 pb-24 pt-10 sm:pt-16">
+      <Onboarding />
       <header className="mb-8 w-full max-w-sm text-center">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">
             Snap <span className="text-accent">Me</span>
           </h1>
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-surface px-3 py-1 text-sm font-medium text-accent">
-              ⭐ {xp} XP
-            </span>
-            <Link
-              href="/carnet"
-              aria-label="Ouvrir le carnet"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-sm"
+            <motion.span
+              key={xp}
+              initial={{ scale: 1.3 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 15 }}
+              className="rounded-full bg-surface px-3 py-1 text-sm font-medium text-accent"
             >
-              📖
-            </Link>
+              ⭐ {xp} XP
+            </motion.span>
           </div>
         </div>
         <p className="mt-2 text-sm text-muted">
@@ -219,14 +220,18 @@ export default function Home() {
             <LevelSelector current={level} xp={xp} />
 
             {preview && (
-              <div className="aspect-square w-full max-w-xs overflow-hidden rounded-3xl border border-white/10 bg-surface">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="aspect-square w-full max-w-xs overflow-hidden rounded-3xl border border-white/10 bg-surface"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={preview}
                   alt="Photo prise"
                   className="h-full w-full object-cover"
                 />
-              </div>
+              </motion.div>
             )}
 
             <input
@@ -242,11 +247,22 @@ export default function Home() {
             />
 
             <div className="flex flex-col items-center gap-3">
-              <button
+              <motion.button
                 type="button"
                 disabled={isBusy || remainingSnaps === 0}
                 onClick={() => inputRef.current?.click()}
-                className="flex h-32 w-32 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-xl shadow-accent/30 transition-transform active:scale-95 disabled:opacity-60"
+                whileTap={{ scale: 0.92 }}
+                animate={
+                  !isBusy && remainingSnaps > 0
+                    ? { scale: [1, 1.04, 1] }
+                    : { scale: 1 }
+                }
+                transition={
+                  !isBusy && remainingSnaps > 0
+                    ? { duration: 2.4, repeat: Infinity, ease: "easeInOut" }
+                    : { duration: 0.2 }
+                }
+                className="flex h-32 w-32 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-xl shadow-accent/30 disabled:opacity-60"
                 aria-label="Prendre une photo"
               >
                 {isBusy ? (
@@ -254,7 +270,7 @@ export default function Home() {
                 ) : (
                   <span className="text-5xl">📸</span>
                 )}
-              </button>
+              </motion.button>
               {!isBusy && (
                 <p className="text-base font-medium">Prendre une photo</p>
               )}
@@ -266,19 +282,35 @@ export default function Home() {
                 : "Quota du jour épuisé"}
             </p>
 
-            <p className="h-5 text-sm text-muted">
+            <div className="h-5 text-sm text-muted">
               {status === "compressing" && "Compression de la photo..."}
-              {status === "identifying" &&
-                THINKING_MESSAGES[thinkingMessageIndex]}
+              {status === "identifying" && (
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={thinkingMessageIndex}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {THINKING_MESSAGES[thinkingMessageIndex]}
+                  </motion.p>
+                </AnimatePresence>
+              )}
               {status === "error" && (
                 <span className="text-red-400">{error}</span>
               )}
-            </p>
+            </div>
           </>
         )}
 
         {identified && (
-          <div className="flex w-full flex-col gap-5">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="flex w-full flex-col gap-5"
+          >
             {preview && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -288,7 +320,12 @@ export default function Home() {
               />
             )}
 
-            <div className="flex items-center gap-4 rounded-2xl bg-surface p-5">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 22 }}
+              className="flex items-center gap-4 rounded-2xl bg-surface p-5"
+            >
               <div className="flex-1">
                 <p className="text-sm text-muted">{identified.objectFr}</p>
                 <h2 className="text-3xl font-bold text-accent">
@@ -297,7 +334,7 @@ export default function Home() {
                 <p className="mt-1 text-sm text-muted">{identified.ipa}</p>
               </div>
               <SpeakButton text={identified.objectEn} />
-            </div>
+            </motion.div>
 
             {status === "detailing" && (
               <div className="flex flex-col gap-3">
@@ -327,8 +364,11 @@ export default function Home() {
               <>
                 <div className="flex flex-col gap-3">
                   {details.sentences.map((s, i) => (
-                    <div
+                    <motion.div
                       key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08 }}
                       className="flex items-center gap-3 rounded-2xl bg-surface p-4"
                     >
                       <div className="flex-1">
@@ -336,17 +376,23 @@ export default function Home() {
                         <p className="text-sm text-muted">{s.fr}</p>
                       </div>
                       <SpeakButton text={s.en} size="sm" />
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
                 <div className="flex flex-col gap-3">
                   {details.exercises.map((exercise, i) => (
-                    <ExerciseCard
+                    <motion.div
                       key={`${snapKey}-${i}`}
-                      exercise={exercise}
-                      onCorrect={handleCorrectExercise}
-                    />
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.24 + i * 0.08 }}
+                    >
+                      <ExerciseCard
+                        exercise={exercise}
+                        onCorrect={handleCorrectExercise}
+                      />
+                    </motion.div>
                   ))}
                 </div>
               </>
@@ -359,7 +405,7 @@ export default function Home() {
             >
               Reprendre une photo
             </button>
-          </div>
+          </motion.div>
         )}
       </main>
     </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { SpeakButton } from "@/components/SpeakButton";
 import {
   deleteSnapFromHistory,
@@ -35,15 +36,8 @@ export default function Carnet() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center px-4 py-10 sm:py-16">
-      <header className="mb-8 flex w-full max-w-sm items-center gap-3">
-        <Link
-          href="/"
-          aria-label="Retour"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface"
-        >
-          ←
-        </Link>
+    <div className="flex flex-1 flex-col items-center px-4 pb-24 pt-10 sm:pt-16">
+      <header className="mb-8 w-full max-w-sm">
         <h1 className="text-2xl font-bold tracking-tight">
           Mon <span className="text-accent">carnet</span>
         </h1>
@@ -67,41 +61,51 @@ export default function Carnet() {
 
         {!selected && snaps.length > 0 && (
           <div className="grid grid-cols-2 gap-3">
-            {snaps.map((snap) => (
-              <div key={snap.id} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(snap.id)}
-                  className="flex w-full flex-col overflow-hidden rounded-2xl bg-surface text-left"
+            <AnimatePresence>
+              {snaps.map((snap, i) => (
+                <motion.div
+                  key={snap.id}
+                  layout
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="relative"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={snap.imageDataUrl}
-                    alt={snap.objectEn}
-                    className="aspect-square w-full object-cover"
-                  />
-                  <div className="p-3">
-                    <p className="font-semibold text-accent">
-                      {snap.objectEn}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {formatDate(snap.createdAt)}
-                    </p>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(snap.id);
-                  }}
-                  aria-label={`Supprimer "${snap.objectEn}"`}
-                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white backdrop-blur-sm active:bg-red-500/80"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(snap.id)}
+                    className="flex w-full flex-col overflow-hidden rounded-2xl bg-surface text-left"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={snap.imageDataUrl}
+                      alt={snap.objectEn}
+                      className="aspect-square w-full object-cover"
+                    />
+                    <div className="p-3">
+                      <p className="font-semibold text-accent">
+                        {snap.objectEn}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {formatDate(snap.createdAt)}
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(snap.id);
+                    }}
+                    aria-label={`Supprimer "${snap.objectEn}"`}
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white backdrop-blur-sm active:bg-red-500/80"
+                  >
+                    ✕
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
 
