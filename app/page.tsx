@@ -8,6 +8,7 @@ import { SpeakButton } from "@/components/SpeakButton";
 import { ExerciseCard } from "@/components/ExerciseCard";
 import { LevelSelector } from "@/components/LevelSelector";
 import { Onboarding } from "@/components/Onboarding";
+import { Sparkle } from "@/components/Sparkle";
 import {
   DAILY_SNAP_QUOTA,
   addXp,
@@ -190,8 +191,9 @@ export default function Home() {
       <Onboarding />
       <header className="mb-8 w-full max-w-sm text-center">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="relative inline-block text-3xl font-bold tracking-tight">
             Snap <span className="text-accent">Me</span>
+            <Sparkle className="absolute -right-3 -top-1.5 h-3.5 w-3.5 rotate-12 text-amber-400" />
           </h1>
           <div className="flex items-center gap-2">
             <motion.span

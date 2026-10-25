@@ -40,13 +40,37 @@ export default function OgImage() {
             }}
           />
         </div>
-        <div style={{ display: "flex", flexDirection: "row" }}>
+        <div style={{ display: "flex", flexDirection: "row", position: "relative" }}>
           <span style={{ fontSize: 96, fontWeight: 700, color: "#f5f0f7" }}>
             Snap&nbsp;
           </span>
           <span style={{ fontSize: 96, fontWeight: 700, color: "#FF6B35" }}>
             Me
           </span>
+          <div
+            style={{
+              position: "absolute",
+              top: 6,
+              right: -28,
+              width: 22,
+              height: 22,
+              background: "#FBBF24",
+              transform: "rotate(45deg)",
+              display: "flex",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              top: -18,
+              right: -8,
+              width: 11,
+              height: 11,
+              background: "#FBBF24",
+              transform: "rotate(45deg)",
+              display: "flex",
+            }}
+          />
         </div>
         <div style={{ display: "flex", fontSize: 34, color: "#9b8fac" }}>
           Apprends l&apos;anglais avec tes photos

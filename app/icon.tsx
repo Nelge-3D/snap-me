@@ -38,6 +38,18 @@ export default function Icon() {
             }}
           />
         </div>
+        <div
+          style={{
+            position: "absolute",
+            top: 3,
+            right: 4,
+            width: 5,
+            height: 5,
+            background: "#FBBF24",
+            transform: "rotate(45deg)",
+            display: "flex",
+          }}
+        />
       </div>
     ),
     size
