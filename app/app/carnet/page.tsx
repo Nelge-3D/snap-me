@@ -53,7 +53,7 @@ export default function Carnet() {
             <p className="text-muted">
               Ton carnet est vide pour l&apos;instant.
             </p>
-            <Link href="/" className="text-sm font-medium text-accent">
+            <Link href="/app" className="text-sm font-medium text-accent">
               Prendre ta première photo →
             </Link>
           </div>

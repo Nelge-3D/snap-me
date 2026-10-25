@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 const TABS = [
-  { href: "/", label: "Accueil", icon: "📸" },
-  { href: "/carnet", label: "Carnet", icon: "📖" },
+  { href: "/app", label: "Accueil", icon: "📸" },
+  { href: "/app/carnet", label: "Carnet", icon: "📖" },
 ];
 
 export function BottomNav() {

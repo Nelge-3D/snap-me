@@ -1,415 +1,318 @@
-"use client";
-
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { compressImage } from "@/lib/compressImage";
-import type { DetailsResult, IdentifyResult } from "@/lib/types";
-import { SpeakButton } from "@/components/SpeakButton";
-import { ExerciseCard } from "@/components/ExerciseCard";
-import { LevelSelector } from "@/components/LevelSelector";
-import { Onboarding } from "@/components/Onboarding";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { Sparkle } from "@/components/Sparkle";
 import {
-  DAILY_SNAP_QUOTA,
-  addXp,
-  canSnapToday,
-  getLevelServerSnapshot,
-  getLevelSnapshot,
-  getRemainingSnapsServerSnapshot,
-  getRemainingSnapsSnapshot,
-  getXpServerSnapshot,
-  getXpSnapshot,
-  recordSnap,
-  saveSnapToHistory,
-  subscribeProgress,
-} from "@/lib/storage";
+  ExercisePhone,
+  HomePhone,
+  ResultPhone,
+} from "@/components/landing/Phones";
 
-type Status =
-  | "idle"
-  | "compressing"
-  | "identifying"
-  | "detailing"
-  | "done"
-  | "error";
+export const metadata: Metadata = {
+  title: "Snap Me - apprends l'anglais avec ce que tu vois",
+  description:
+    "Photographie un objet autour de toi, découvre son nom en anglais, écoute-le prononcer et progresse du présent au futur. Bientôt disponible.",
+};
 
-// Gemma 4 peut mettre plusieurs secondes à répondre : on fait tourner des
-// messages plutôt que de laisser un texte figé, pour que l'attente se sente
-// vivante même quand elle est réellement longue.
-const THINKING_MESSAGES = [
-  "Gemma 4 regarde ta photo...",
-  "Elle identifie l'objet...",
-  "La patience, un pas de plus vers l'anglais...",
-  "Presque prêt...",
+const NAV = [
+  { href: "#fonctionnalites", label: "Fonctionnalités" },
+  { href: "#comment", label: "Comment ça marche" },
+  { href: "#demo", label: "Démo" },
+  { href: "#faq", label: "FAQ" },
 ];
 
-export default function Home() {
-  const [status, setStatus] = useState<Status>("idle");
-  const [preview, setPreview] = useState<string | null>(null);
-  const [identified, setIdentified] = useState<IdentifyResult | null>(null);
-  const [details, setDetails] = useState<DetailsResult | null>(null);
-  const [detailsError, setDetailsError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [snapKey, setSnapKey] = useState(0);
-  const [thinkingMessageIndex, setThinkingMessageIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+const FEATURES = [
+  {
+    icon: "📸",
+    title: "Prends des photos",
+    text: "Photographie les objets qui t'entourent dans ta vie quotidienne.",
+  },
+  {
+    icon: "🔊",
+    title: "Écoute la prononciation",
+    text: "Chaque mot vient avec son IPA et une voix qui le prononce, directement dans ton navigateur.",
+  },
+  {
+    icon: "📈",
+    title: "Progresse en grammaire",
+    text: "Gagne de l'XP et débloque peu à peu le passé puis le futur.",
+  },
+];
 
-  const xp = useSyncExternalStore(
-    subscribeProgress,
-    getXpSnapshot,
-    getXpServerSnapshot
-  );
-  const remainingSnaps = useSyncExternalStore(
-    subscribeProgress,
-    getRemainingSnapsSnapshot,
-    getRemainingSnapsServerSnapshot
-  );
-  const level = useSyncExternalStore(
-    subscribeProgress,
-    getLevelSnapshot,
-    getLevelServerSnapshot
-  );
+const STEPS = [
+  {
+    title: "Photographie ton environnement",
+    text: "Une chaise, un mug, une plante : prends en photo ce qui est autour de toi, à la maison ou en ville.",
+  },
+  {
+    title: "L'IA identifie l'objet",
+    text: "Snap Me reconnaît l'objet et te donne le mot anglais, sa prononciation et des phrases d'exemple.",
+  },
+  {
+    title: "Complète des exercices",
+    text: "Des exercices à trous fixent le vocabulaire, et ton XP débloque de nouveaux temps.",
+  },
+];
 
-  function handleCorrectExercise() {
-    addXp(10);
-  }
+const FAQ = [
+  {
+    q: "Faut-il créer un compte ?",
+    a: "Non. Snap Me n'a pas de compte ni de base de données : ton carnet est gardé sur ton appareil, dans ton navigateur.",
+  },
+  {
+    q: "Quelle technologie est derrière ?",
+    a: "Gemma 4, le modèle ouvert de Google, reconnaît les objets et écrit les phrases. La voix vient de Kokoro-82M, qui tourne entièrement dans ton navigateur.",
+  },
+  {
+    q: "Sur quels appareils ça marche ?",
+    a: "Sur le navigateur de ton téléphone ou de ton ordinateur. Rien à installer.",
+  },
+  {
+    q: "Est-ce gratuit ?",
+    a: "La démo est gratuite, avec une limite de 5 photos par jour pour garder le service ouvert à tous.",
+  },
+  {
+    q: "Qui a créé Snap Me ?",
+    a: "Louis-Gériel Ngabi (Nelge 3D), développeur web, artiste 3D et professeur d'anglais à Libreville, pour le Hacktoberfest Hack Day Libreville 2026.",
+  },
+];
 
-  useEffect(() => {
-    if (status !== "identifying") return;
-    const interval = setInterval(() => {
-      setThinkingMessageIndex((i) =>
-        Math.min(i + 1, THINKING_MESSAGES.length - 1)
-      );
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [status]);
+const BUTTON_PRIMARY =
+  "inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground shadow-lg shadow-accent/30 transition hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+const BUTTON_SECONDARY =
+  "inline-flex items-center justify-center gap-2 rounded-full border border-accent px-6 py-3 text-sm font-semibold text-accent transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
-  async function fetchDetails(
-    idData: IdentifyResult,
-    thumbnailDataUrl: string
-  ) {
-    setDetailsError(null);
-    setStatus("detailing");
-    try {
-      const res = await fetch("/api/snap/details", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          objectEn: idData.objectEn,
-          objectFr: idData.objectFr,
-          level,
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Erreur inconnue");
-      }
-
-      const detData: DetailsResult = await res.json();
-      setDetails(detData);
-      setStatus("done");
-
-      saveSnapToHistory({
-        ...idData,
-        ...detData,
-        level,
-        id: crypto.randomUUID(),
-        imageDataUrl: thumbnailDataUrl,
-        createdAt: Date.now(),
-      });
-    } catch (err) {
-      console.error(err);
-      // Le mot est déjà affiché : un échec ici ne doit pas tout effacer.
-      setDetailsError(
-        err instanceof Error ? err.message : "Erreur inconnue"
-      );
-      setStatus("done");
-    }
-  }
-
-  async function handleFile(file: File) {
-    if (!canSnapToday()) {
-      setError("Tu as utilisé tes 5 photos du jour. Reviens demain !");
-      setStatus("error");
-      return;
-    }
-
-    setError(null);
-    setDetailsError(null);
-    setIdentified(null);
-    setDetails(null);
-    setThinkingMessageIndex(0);
-    setStatus("compressing");
-
-    try {
-      const { apiImage, thumbnail } = await compressImage(file);
-      const thumbnailDataUrl = `data:${thumbnail.mimeType};base64,${thumbnail.base64}`;
-      setPreview(thumbnailDataUrl);
-
-      setStatus("identifying");
-      const res = await fetch("/api/snap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageBase64: apiImage.base64,
-          mimeType: apiImage.mimeType,
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Erreur inconnue");
-      }
-
-      const idData: IdentifyResult = await res.json();
-      recordSnap();
-      setIdentified(idData);
-      setSnapKey((k) => k + 1);
-
-      await fetchDetails(idData, thumbnailDataUrl);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
-      setStatus("error");
-    }
-  }
-
-  function reset() {
-    setStatus("idle");
-    setPreview(null);
-    setIdentified(null);
-    setDetails(null);
-    setDetailsError(null);
-    setError(null);
-    if (inputRef.current) inputRef.current.value = "";
-  }
-
-  const isBusy = status === "compressing" || status === "identifying";
-
+function Wordmark({ className = "text-2xl" }: { className?: string }) {
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center px-4 pb-24 pt-10 sm:pt-16">
-      <Onboarding />
-      <header className="mb-8 w-full max-w-sm text-center">
-        <div className="flex items-center justify-between">
-          <h1 className="relative inline-block text-3xl font-bold tracking-tight">
-            Snap <span className="text-accent">Me</span>
-            <Sparkle className="absolute -right-3 -top-1.5 h-3.5 w-3.5 rotate-12 text-amber-400" />
-          </h1>
-          <div className="flex items-center gap-2">
-            <motion.span
-              key={xp}
-              initial={{ scale: 1.3 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 500, damping: 15 }}
-              className="rounded-full bg-surface px-3 py-1 text-sm font-medium text-accent"
-            >
-              ⭐ {xp} XP
-            </motion.span>
-          </div>
+    <span
+      className={`relative inline-block font-bold tracking-tight ${className}`}
+    >
+      Snap <span className="text-accent">Me</span>
+      <Sparkle className="absolute -right-3.5 -top-1.5 h-3.5 w-3.5 rotate-12 text-amber-400" />
+    </span>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <div className="flex-1 overflow-x-clip">
+      <header className="sticky top-0 z-30 border-b border-surface-border/70 bg-background/85 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+          <Link href="/" aria-label="Snap Me, accueil">
+            <Wordmark />
+          </Link>
+          <nav aria-label="Navigation principale" className="hidden gap-8 text-sm md:flex">
+            {NAV.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="text-muted transition hover:text-foreground"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+          <Link href="/app" className={`${BUTTON_PRIMARY} !px-5 !py-2`}>
+            Essayer la démo
+          </Link>
         </div>
-        <p className="mt-2 text-sm text-muted">
-          Photographie un objet autour de toi, apprends son nom en anglais.
-        </p>
       </header>
 
-      <main
-        className={`flex w-full max-w-sm flex-1 flex-col items-center gap-6 ${
-          !identified ? "justify-center" : ""
-        }`}
-      >
-        {!identified && (
-          <>
-            <LevelSelector current={level} xp={xp} />
-
-            {preview && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="aspect-square w-full max-w-xs overflow-hidden rounded-3xl border border-surface-border bg-surface"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={preview}
-                  alt="Photo prise"
-                  className="h-full w-full object-cover"
-                />
-              </motion.div>
-            )}
-
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFile(file);
-              }}
-            />
-
-            <div className="flex flex-col items-center gap-3">
-              <motion.button
-                type="button"
-                disabled={isBusy || remainingSnaps === 0}
-                onClick={() => inputRef.current?.click()}
-                whileTap={{ scale: 0.92 }}
-                animate={
-                  !isBusy && remainingSnaps > 0
-                    ? { scale: [1, 1.04, 1] }
-                    : { scale: 1 }
-                }
-                transition={
-                  !isBusy && remainingSnaps > 0
-                    ? { duration: 2.4, repeat: Infinity, ease: "easeInOut" }
-                    : { duration: 0.2 }
-                }
-                className="flex h-32 w-32 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-xl shadow-accent/30 disabled:opacity-60"
-                aria-label="Prendre une photo"
-              >
-                {isBusy ? (
-                  <span className="h-10 w-10 animate-spin rounded-full border-4 border-accent-foreground/40 border-t-accent-foreground" />
-                ) : (
-                  <span className="text-5xl">📸</span>
+      <main>
+        <section className="relative bg-gradient-to-b from-orange-50 via-background to-background">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-accent/10 blur-3xl"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-24 top-10 h-80 w-80 rounded-full bg-amber-300/20 blur-3xl"
+          />
+          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-14 lg:grid-cols-2 lg:pt-20">
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
+                <Sparkle className="h-3 w-3 text-amber-500" />
+                Bientôt disponible
+              </span>
+              <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+                Apprends l&apos;anglais{" "}
+                <span className="text-accent">avec ce que tu vois.</span>
+              </h1>
+              <p className="mt-5 max-w-lg text-lg text-muted">
+                Photographie ce qui t&apos;entoure au quotidien, découvre le
+                mot en anglais, écoute-le prononcer et progresse du présent au
+                passé, puis au futur.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="/app" className={BUTTON_PRIMARY}>
+                  Découvrir la démo <span aria-hidden="true">→</span>
+                </Link>
+                <a href="#comment" className={BUTTON_SECONDARY}>
+                  Comment ça marche
+                </a>
+              </div>
+              <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
+                {["Simple et ludique", "Basé sur la vie réelle", "Sans compte"].map(
+                  (item) => (
+                    <li key={item} className="flex items-center gap-1.5">
+                      <span aria-hidden="true" className="text-accent">
+                        ✓
+                      </span>
+                      {item}
+                    </li>
+                  ),
                 )}
-              </motion.button>
-              {!isBusy && (
-                <p className="text-base font-medium">Prendre une photo</p>
-              )}
+              </ul>
             </div>
 
-            <p className="text-xs text-muted">
-              {remainingSnaps > 0
-                ? `${remainingSnaps}/${DAILY_SNAP_QUOTA} photos aujourd'hui`
-                : "Quota du jour épuisé"}
+            <div className="relative flex justify-center py-4">
+              <HomePhone className="absolute -left-2 top-10 hidden -rotate-6 scale-90 opacity-95 md:block lg:-left-6" />
+              <ExercisePhone className="absolute -right-2 top-10 hidden rotate-6 scale-90 opacity-95 md:block lg:-right-6" />
+              <ResultPhone className="relative z-10 scale-105" />
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="fonctionnalites"
+          className="mx-auto max-w-6xl scroll-mt-20 px-5 py-16"
+        >
+          <div className="grid gap-5 md:grid-cols-3">
+            {FEATURES.map((feature) => (
+              <article
+                key={feature.title}
+                className="rounded-3xl border border-surface-border bg-white/70 p-6 shadow-sm"
+              >
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-3xl">
+                  {feature.icon}
+                </span>
+                <h2 className="mt-4 text-lg font-bold">{feature.title}</h2>
+                <p className="mt-1.5 text-sm text-muted">{feature.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section
+          id="comment"
+          className="mx-auto max-w-6xl scroll-mt-20 px-5 pb-16"
+        >
+          <div className="rounded-[2rem] bg-surface px-6 py-12 sm:px-10">
+            <p className="text-center text-xs font-semibold uppercase tracking-widest text-accent">
+              Comment ça marche ?
             </p>
+            <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight">
+              3 étapes pour apprendre naturellement
+            </h2>
+            <ol className="mt-10 grid gap-8 md:grid-cols-3">
+              {STEPS.map((step, index) => (
+                <li key={step.title} className="flex gap-4">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <h3 className="font-bold">{step.title}</h3>
+                    <p className="mt-1 text-sm text-muted">{step.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
 
-            <div className="h-5 text-sm text-muted">
-              {status === "compressing" && "Compression de la photo..."}
-              {status === "identifying" && (
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={thinkingMessageIndex}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {THINKING_MESSAGES[thinkingMessageIndex]}
-                  </motion.p>
-                </AnimatePresence>
-              )}
-              {status === "error" && (
-                <span className="text-red-400">{error}</span>
-              )}
+        <section
+          id="demo"
+          className="mx-auto max-w-6xl scroll-mt-20 px-5 pb-16"
+        >
+          <div className="grid items-center gap-8 rounded-[2rem] bg-gradient-to-br from-amber-50 to-orange-100 px-6 py-12 sm:px-10 md:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+                Démo
+              </p>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight">
+                Découvre la démo de Snap Me
+              </h2>
+              <p className="mt-3 text-muted">
+                Essaie avec un vrai objet autour de toi : photo, mot anglais,
+                prononciation et exercice, en moins d&apos;une minute.
+              </p>
+              <Link href="/app" className={`${BUTTON_PRIMARY} mt-6`}>
+                Voir la démo <span aria-hidden="true">→</span>
+              </Link>
             </div>
-          </>
-        )}
-
-        {identified && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="flex w-full flex-col gap-5"
-          >
-            {preview && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={preview}
-                alt={identified.objectEn}
-                className="aspect-square w-full rounded-3xl object-cover"
-              />
-            )}
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 22 }}
-              className="flex items-center gap-4 rounded-2xl bg-surface p-5"
-            >
-              <div className="flex-1">
-                <p className="text-sm text-muted">{identified.objectFr}</p>
-                <h2 className="text-3xl font-bold text-accent">
-                  {identified.objectEn}
-                </h2>
-                <p className="mt-1 text-sm text-muted">{identified.ipa}</p>
-              </div>
-              <SpeakButton text={identified.objectEn} />
-            </motion.div>
-
-            {status === "detailing" && (
-              <div className="flex flex-col gap-3">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="h-14 animate-pulse rounded-2xl bg-surface"
-                  />
+            <div className="rounded-3xl bg-white/80 p-6 shadow-sm">
+              <p className="text-lg font-semibold leading-snug">
+                Pensé pour un apprentissage concret et quotidien : l&apos;anglais
+                utile, visuel et motivant.
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-muted">
+                {[
+                  "Gratuit, sans compte à créer",
+                  "Ton carnet reste sur ton appareil",
+                  "Voix générée dans ton navigateur",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2">
+                    <span aria-hidden="true" className="text-accent">
+                      ✓
+                    </span>
+                    {item}
+                  </li>
                 ))}
-              </div>
-            )}
+              </ul>
+            </div>
+          </div>
+        </section>
 
-            {detailsError && (
-              <div className="flex flex-col items-center gap-2 rounded-2xl bg-surface p-4 text-center">
-                <p className="text-sm text-red-400">{detailsError}</p>
-                <button
-                  type="button"
-                  onClick={() => preview && fetchDetails(identified, preview)}
-                  className="text-sm font-medium text-accent"
-                >
-                  Réessayer
-                </button>
-              </div>
-            )}
+        <section
+          id="faq"
+          className="mx-auto max-w-3xl scroll-mt-20 px-5 pb-16"
+        >
+          <h2 className="text-center text-3xl font-extrabold tracking-tight">
+            Questions fréquentes
+          </h2>
+          <div className="mt-8 divide-y divide-surface-border rounded-3xl border border-surface-border bg-white/70">
+            {FAQ.map((item) => (
+              <details key={item.q} className="group px-6 py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold [&::-webkit-details-marker]:hidden">
+                  {item.q}
+                  <span
+                    aria-hidden="true"
+                    className="text-xl text-accent transition group-open:rotate-45"
+                  >
+                    +
+                  </span>
+                </summary>
+                <p className="mt-2 text-sm text-muted">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
 
-            {details && (
-              <>
-                <div className="flex flex-col gap-3">
-                  {details.sentences.map((s, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08 }}
-                      className="flex items-center gap-3 rounded-2xl bg-surface p-4"
-                    >
-                      <div className="flex-1">
-                        <p className="text-base">{s.en}</p>
-                        <p className="text-sm text-muted">{s.fr}</p>
-                      </div>
-                      <SpeakButton text={s.en} size="sm" />
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {details.exercises.map((exercise, i) => (
-                    <motion.div
-                      key={`${snapKey}-${i}`}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.24 + i * 0.08 }}
-                    >
-                      <ExerciseCard
-                        exercise={exercise}
-                        onCorrect={handleCorrectExercise}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            <button
-              type="button"
-              onClick={reset}
-              className="mt-2 flex h-12 items-center justify-center rounded-full border border-accent/50 text-accent transition-colors active:bg-accent/10"
-            >
-              Reprendre une photo
-            </button>
-          </motion.div>
-        )}
+        <section className="px-5 pb-20 text-center">
+          <Wordmark className="text-4xl" />
+          <p className="mt-3 text-lg font-semibold">Snap Me arrive bientôt.</p>
+          <p className="mx-auto mt-1 max-w-md text-muted">
+            En attendant, la démo est ouverte : essaie-la dès maintenant.
+          </p>
+          <Link href="/app" className={`${BUTTON_PRIMARY} mt-6`}>
+            Essayer la démo <span aria-hidden="true">→</span>
+          </Link>
+        </section>
       </main>
+
+      <footer className="border-t border-surface-border px-5 py-8 text-center text-sm text-muted">
+        <p>
+          Fait à Libreville pour le Hacktoberfest Hack Day 2026, avec Gemma 4 et
+          Kokoro-82M.
+        </p>
+        <p className="mt-1">
+          <a
+            href="https://github.com/Nelge-3D/snap-me"
+            className="font-medium text-accent hover:underline"
+          >
+            Code source sur GitHub
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }
