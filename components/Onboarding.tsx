@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Wordmark } from "@/components/Wordmark";
 
 const STORAGE_KEY = "snapme:onboarded";
 
@@ -67,7 +68,7 @@ export function Onboarding() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-bold">
-              Bienvenue sur Snap <span className="text-accent">Me</span> 👋
+              Bienvenue sur <Wordmark className="" /> 👋
             </h2>
             <p className="mt-1 text-sm text-muted">
               Apprends l&apos;anglais à partir de ce qui t&apos;entoure.

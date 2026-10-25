@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { spaceGrotesk } from "@/lib/fonts";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,7 +20,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://snap-me-omega.vercel.app"),
   appleWebApp: { capable: true, title: "Snap Me", statusBarStyle: "default" },
-  title: "Snap Me — apprends l'anglais avec tes photos",
+  title: "Snap Me - apprends l'anglais avec tes photos",
   description:
     "Photographie un objet autour de toi, apprends son nom en anglais, entends-le prononcer.",
 };
@@ -28,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-background text-foreground">
         {children}

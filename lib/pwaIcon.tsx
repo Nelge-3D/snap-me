@@ -1,7 +1,11 @@
 import { ImageResponse } from "next/og";
 
-export function renderAppIcon(px: number) {
-  const u = px / 100;
+const SPARKLE =
+  "M12 2L13.5 9.5L21 11L13.5 12.5L12 20L10.5 12.5L3 11L10.5 9.5L12 2Z";
+
+export function renderAppIcon(px: number, cornerRadius = 0) {
+  const big = Math.round(px * 0.64);
+  const small = Math.round(px * 0.24);
   return new ImageResponse(
     (
       <div
@@ -9,44 +13,29 @@ export function renderAppIcon(px: number) {
           width: "100%",
           height: "100%",
           background: "#201927",
+          borderRadius: cornerRadius,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <div
-          style={{
-            width: 52 * u,
-            height: 36 * u,
-            background: "#FF6B35",
-            borderRadius: 8 * u,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 20 * u,
-              height: 20 * u,
-              borderRadius: "50%",
-              background: "#201927",
-              display: "flex",
-            }}
-          />
+        <div style={{ display: "flex", marginRight: Math.round(px * 0.05) }}>
+          <svg width={big} height={big} viewBox="0 0 24 24">
+            <path d={SPARKLE} fill="#FF6B35" />
+          </svg>
         </div>
         <div
           style={{
             position: "absolute",
-            top: 24 * u,
-            right: 24 * u,
-            width: 11 * u,
-            height: 11 * u,
-            background: "#FBBF24",
-            transform: "rotate(45deg)",
+            top: Math.round(px * 0.2),
+            right: Math.round(px * 0.2),
             display: "flex",
           }}
-        />
+        >
+          <svg width={small} height={small} viewBox="0 0 24 24">
+            <path d={SPARKLE} fill="#FBBF24" />
+          </svg>
+        </div>
       </div>
     ),
     { width: px, height: px },

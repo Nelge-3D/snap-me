@@ -54,6 +54,7 @@ L'interface a évolué vers une palette claire (fond quasi blanc, accent orange,
 
 - **Next.js**, App Router, TypeScript
 - **Tailwind CSS v4**
+- **Space Grotesk** et **Manrope** (licence SIL OFL) pour la marque et la landing ; les fichiers de `assets/fonts` servent à dessiner l'image de partage
 - **Google Gemini API** pour accéder à Gemma 4 : clé API côté serveur uniquement, jamais exposée au client
 - **kokoro-js** pour la synthèse vocale dans le navigateur, avec repli automatique sur `window.speechSynthesis` si Kokoro est indisponible
 - **localStorage** pour toute la persistance (XP, niveau, quota, carnet)

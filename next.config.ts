@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  outputFileTracingIncludes: {
+    "/opengraph-image": ["./assets/fonts/**/*"],
+  },
   async redirects() {
     return [{ source: "/carnet", destination: "/app/carnet", permanent: true }];
   },

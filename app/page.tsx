@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkle } from "@/components/Sparkle";
-import { manrope, spaceGrotesk } from "@/lib/landingFonts";
+import { Wordmark } from "@/components/Wordmark";
+import { manrope } from "@/lib/landingFonts";
 import {
   ExercisePhone,
   HomePhone,
@@ -104,21 +105,10 @@ const BUTTON_PRIMARY =
 const BUTTON_SECONDARY =
   "inline-flex items-center justify-center gap-2 rounded-full border border-accent px-6 py-3 text-sm font-semibold text-accent transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
-function Wordmark({ className = "text-2xl" }: { className?: string }) {
-  return (
-    <span
-      className={`font-display inline-flex items-baseline font-bold ${className}`}
-    >
-      snapme
-      <Sparkle className="ml-[0.06em] h-[0.55em] w-[0.55em] text-accent" />
-    </span>
-  );
-}
-
 export default function LandingPage() {
   return (
     <div
-      className={`landing ${spaceGrotesk.variable} ${manrope.variable} flex-1 overflow-x-clip`}
+      className={`landing ${manrope.variable} flex-1 overflow-x-clip`}
     >
       <header className="sticky top-0 z-30 border-b border-surface-border/70 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">

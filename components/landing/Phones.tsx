@@ -1,4 +1,4 @@
-import { Sparkle } from "@/components/Sparkle";
+import { Wordmark } from "@/components/Wordmark";
 
 function Phone({
   children,
@@ -17,20 +17,15 @@ function Phone({
   );
 }
 
-function Wordmark() {
-  return (
-    <span className="relative inline-block text-lg font-bold tracking-tight">
-      Snap <span className="text-accent">Me</span>
-      <Sparkle className="absolute -right-2.5 -top-1 h-2.5 w-2.5 rotate-12 text-amber-400" />
-    </span>
-  );
+function PhoneWordmark() {
+  return <Wordmark className="text-lg" />;
 }
 
 export function HomePhone({ className }: { className?: string }) {
   return (
     <Phone className={className}>
       <div className="flex items-center justify-between">
-        <Wordmark />
+        <PhoneWordmark />
         <span className="rounded-full bg-surface px-2 py-0.5 text-[0.65rem] font-medium text-accent">
           ⭐ 40 XP
         </span>
@@ -64,7 +59,7 @@ export function ResultPhone({ className }: { className?: string }) {
   return (
     <Phone className={className}>
       <div className="flex items-center justify-between">
-        <Wordmark />
+        <PhoneWordmark />
         <span className="rounded-full bg-surface px-2 py-0.5 text-[0.65rem] font-medium text-accent">
           ⭐ 50 XP
         </span>
@@ -100,7 +95,7 @@ export function ExercisePhone({ className }: { className?: string }) {
   return (
     <Phone className={className}>
       <div className="flex items-center justify-between">
-        <Wordmark />
+        <PhoneWordmark />
         <span className="rounded-full bg-surface px-2 py-0.5 text-[0.65rem] font-medium text-accent">
           ⭐ 60 XP
         </span>
