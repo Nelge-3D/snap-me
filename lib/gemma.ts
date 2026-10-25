@@ -1,8 +1,14 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import type { GenerateContentParameters } from "@google/genai";
 import type { DetailsResult, Exercise, IdentifyResult, Level } from "./types";
 
 const MODEL = "gemma-4-26b-a4b-it";
+
+// Coupe le raisonnement interne de Gemma 4 (non documenté officiellement,
+// mais thoughtsTokenCount tombe à 0 et c'est stable sur 6 appels testés).
+// Gain mesuré : identify 9-13s -> ~3s, details 34-66s -> ~6s, JSON toujours
+// valide. thinkingBudget: 0 n'est lui pas supporté par ce modèle (400).
+const FAST_CONFIG = { thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } };
 
 const TENSE_LABEL: Record<Level, string> = {
   present: "present tense",
@@ -166,6 +172,7 @@ export async function identifyObject(
         ],
       },
     ],
+    config: FAST_CONFIG,
   });
   console.log(`[gemma] identify: ${Date.now() - start}ms`);
 
@@ -187,6 +194,7 @@ export async function generateDetails(
         parts: [{ text: buildDetailsPrompt(objectEn, objectFr, level) }],
       },
     ],
+    config: FAST_CONFIG,
   });
   console.log(`[gemma] details: ${Date.now() - start}ms`);
 
