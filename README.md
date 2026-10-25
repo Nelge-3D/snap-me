@@ -50,6 +50,12 @@ L'interface a évolué vers une palette claire (fond quasi blanc, accent orange,
 
 <img src="docs/screenshot-exercises.jpg" alt="Exercices à trous réussis avec feedback +10 XP" width="260">
 
+## Usage de l'IA
+
+- **Pour construire le projet** : le code a été écrit avec l'aide de Claude Code (Anthropic, modèles Claude Sonnet 5 et 5.5), sous la direction de l'auteur, qui a défini le produit, relu les changements et testé l'application sur de vraies photos.
+- **Dans l'application** : Gemma 4 (via l'API Gemini) reconnaît l'objet et écrit les phrases et exercices, et Kokoro-82M génère la voix dans le navigateur.
+- **Images** : aucune image générée par IA. Le logo, les icônes et l'image de partage sont dessinés en code, et les captures sont de vraies captures de l'application.
+
 ## Stack technique
 
 - **Next.js**, App Router, TypeScript

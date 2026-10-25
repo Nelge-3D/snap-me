@@ -42,3 +42,9 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# personal files and drafts, never published
+/docs/HANDOFF-CONTEXT.md
+/docs/private/
+/public/Photos reference/
+/public/Snap Me English Learning Landing Page.png
