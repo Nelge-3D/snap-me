@@ -6,6 +6,8 @@ Snap Me est une application web qui apprend l'anglais aux francophones débutant
 
 Projet réalisé pour le **Hacktoberfest Hack Day Libreville 2026**, organisé par le Microsoft User Group Gabon, sur le thème *« AI belongs to everyone »*.
 
+**Essayer la démo : [snap-me-omega.vercel.app](https://snap-me-omega.vercel.app)** (la landing est sur `/`, l'application sur `/app`).
+
 ## Le problème
 
 Apprendre l'anglais à Libreville coûte cher. Un professeur particulier est hors de portée de la plupart des familles, et les méthodes classiques (manuels, listes de vocabulaire) demandent une discipline que peu de débutants tiennent sur la durée.
@@ -21,7 +23,7 @@ On retient mieux un mot attaché à un objet de son propre quotidien qu'un mot p
 3. **Gemma 4** identifie l'objet et renvoie un JSON structuré : le mot anglais, sa transcription phonétique, trois phrases d'exemple au temps grammatical de ton niveau, et deux exercices à trous.
 4. Tu peux écouter la prononciation, construite par **Kokoro-82M**, un modèle de synthèse vocale qui tourne entièrement dans ton navigateur.
 5. Chaque exercice réussi rapporte de l'XP, qui débloque progressivement le passé puis le futur.
-6. Le snap est archivé dans un carnet consultable hors ligne.
+6. Le snap est archivé dans un carnet stocké sur ton appareil.
 
 Un quota de 5 photos par jour est volontaire : il pousse à choisir un objet qui compte plutôt qu'à mitrailler, et crée une habitude quotidienne plutôt qu'un usage compulsif.
 
@@ -42,11 +44,11 @@ Chaque photo est redimensionnée et réencodée en JPEG qualité 0.7 via un canv
 
 L'interface a évolué vers une palette claire (fond quasi blanc, accent orange, texte sombre), plus lisible en plein soleil, un contexte d'usage fréquent pour une app mobile à Libreville.
 
-| Capture → identification | Phrases & exercices | Carnet |
-|---|---|---|
-| ![Écran d'accueil avec les niveaux présent/passé/futur](docs/screenshot-home.jpg) | ![Mot identifié avec phrases et bouton d'écoute](docs/screenshot-result.jpg) | ![Carnet des snaps passés](docs/screenshot-carnet.jpg) |
+| Landing | Accueil | Mot identifié | Carnet |
+|---|---|---|---|
+| ![Page d'accueil du produit, version mobile](docs/screenshot-landing.jpg) | ![Écran d'accueil de l'app avec les niveaux présent/passé/futur](docs/screenshot-home.jpg) | ![Tasse identifiée, mot anglais, phrases d'exemple et bouton d'écoute](docs/screenshot-result.jpg) | ![Carnet des snaps passés](docs/screenshot-carnet.jpg) |
 
-![Exercice à trous réussi avec feedback +10 XP](docs/screenshot-exercises.jpg)
+<img src="docs/screenshot-exercises.jpg" alt="Exercices à trous réussis avec feedback +10 XP" width="260">
 
 ## Stack technique
 
@@ -75,14 +77,15 @@ Puis :
 npm run dev
 ```
 
-Ouvre [http://localhost:3000](http://localhost:3000).
+Ouvre [http://localhost:3000](http://localhost:3000) pour la landing, puis [/app](http://localhost:3000/app) pour l'application.
 
 ## Limites assumées
 
 - Pas de compte, pas de synchronisation entre appareils : la progression vit dans le navigateur utilisé.
 - Le carnet est plafonné à 50 snaps pour rester dans les limites raisonnables du `localStorage`.
 - Un seul objet est identifié par photo, même si plusieurs sont visibles.
-- La latence de l'API Gemma 4 peut dépasser 30 secondes selon la charge, acceptable pour un usage quotidien réfléchi, moins pour un usage impatient.
+- La latence dépend de l'API Gemma 4. Mesurée avec le raisonnement interne minimal (`thinkingLevel: MINIMAL`) : environ 3 à 4 s pour identifier l'objet, puis 5 à 6 s pour les phrases et exercices. Elle peut varier selon la charge.
+- L'app est installable sur l'écran d'accueil (manifest PWA) mais n'a pas de mode hors ligne : il faut du réseau pour la charger et pour identifier un objet.
 
 ## Suite envisagée
 
