@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,8 +12,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#ff6b35",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://snap-me-omega.vercel.app"),
+  appleWebApp: { capable: true, title: "Snap Me", statusBarStyle: "default" },
   title: "Snap Me — apprends l'anglais avec tes photos",
   description:
     "Photographie un objet autour de toi, apprends son nom en anglais, entends-le prononcer.",

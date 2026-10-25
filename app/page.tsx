@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 const NAV = [
   { href: "#fonctionnalites", label: "Fonctionnalités" },
   { href: "#comment", label: "Comment ça marche" },
+  { href: "#techno", label: "Sous le capot" },
   { href: "#demo", label: "Démo" },
   { href: "#faq", label: "FAQ" },
 ];
@@ -50,6 +51,27 @@ const STEPS = [
   {
     title: "Complète des exercices",
     text: "Des exercices à trous fixent le vocabulaire, et ton XP débloque de nouveaux temps.",
+  },
+];
+
+const TECH = [
+  {
+    icon: "🧠",
+    name: "Gemma 4",
+    tag: "Modèle ouvert de Google",
+    text: "Il reconnaît l'objet sur ta photo, puis écrit le mot, les phrases d'exemple et les exercices à trous.",
+  },
+  {
+    icon: "🔊",
+    name: "Kokoro-82M",
+    tag: "Voix 100 % dans ton navigateur",
+    text: "La prononciation est générée sur ton appareil par un petit modèle de synthèse vocale : rien à envoyer, rien à installer.",
+  },
+  {
+    icon: "📱",
+    name: "Ton appareil",
+    tag: "Sans compte, sans base de données",
+    text: "Ton carnet et ton XP restent dans ton navigateur. La photo est réduite sur ton appareil et n'est pas conservée par Snap Me.",
   },
 ];
 
@@ -100,7 +122,7 @@ export default function LandingPage() {
           <Link href="/" aria-label="Snap Me, accueil">
             <Wordmark />
           </Link>
-          <nav aria-label="Navigation principale" className="hidden gap-8 text-sm md:flex">
+          <nav aria-label="Navigation principale" className="hidden gap-8 whitespace-nowrap text-sm lg:flex">
             {NAV.map((item) => (
               <a
                 key={item.href}
@@ -216,6 +238,38 @@ export default function LandingPage() {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+
+        <section
+          id="techno"
+          className="mx-auto max-w-6xl scroll-mt-20 px-5 pb-16"
+        >
+          <p className="text-center text-xs font-semibold uppercase tracking-widest text-accent">
+            Comment c&apos;est fait
+          </p>
+          <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight">
+            Une IA ouverte, une voix dans ton navigateur
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-center text-muted">
+            Snap Me est pensé pour que l&apos;IA soit accessible à tous : des
+            modèles ouverts, gratuits à essayer, et tes données qui restent chez
+            toi.
+          </p>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {TECH.map((item) => (
+              <article
+                key={item.name}
+                className="rounded-3xl border border-surface-border bg-white/70 p-6 shadow-sm"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-2xl">
+                  {item.icon}
+                </span>
+                <h3 className="mt-4 text-lg font-bold">{item.name}</h3>
+                <p className="text-xs font-semibold text-accent">{item.tag}</p>
+                <p className="mt-2 text-sm text-muted">{item.text}</p>
+              </article>
+            ))}
           </div>
         </section>
 
