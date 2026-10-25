@@ -68,25 +68,39 @@ export default function Carnet() {
         {!selected && snaps.length > 0 && (
           <div className="grid grid-cols-2 gap-3">
             {snaps.map((snap) => (
-              <button
-                key={snap.id}
-                type="button"
-                onClick={() => setSelectedId(snap.id)}
-                className="flex flex-col overflow-hidden rounded-2xl bg-surface text-left"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={snap.imageDataUrl}
-                  alt={snap.objectEn}
-                  className="aspect-square w-full object-cover"
-                />
-                <div className="p-3">
-                  <p className="font-semibold text-accent">{snap.objectEn}</p>
-                  <p className="text-xs text-muted">
-                    {formatDate(snap.createdAt)}
-                  </p>
-                </div>
-              </button>
+              <div key={snap.id} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(snap.id)}
+                  className="flex w-full flex-col overflow-hidden rounded-2xl bg-surface text-left"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={snap.imageDataUrl}
+                    alt={snap.objectEn}
+                    className="aspect-square w-full object-cover"
+                  />
+                  <div className="p-3">
+                    <p className="font-semibold text-accent">
+                      {snap.objectEn}
+                    </p>
+                    <p className="text-xs text-muted">
+                      {formatDate(snap.createdAt)}
+                    </p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(snap.id);
+                  }}
+                  aria-label={`Supprimer "${snap.objectEn}"`}
+                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-sm text-white backdrop-blur-sm active:bg-red-500/80"
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </div>
         )}
