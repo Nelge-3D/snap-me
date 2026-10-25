@@ -27,3 +27,12 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+.landing {
+  font-family: var(--font-body), var(--font-sans), Arial, sans-serif;
+}
+
+.landing :is(h1, h2, h3, .font-display) {
+  font-family: var(--font-display), var(--font-body), Arial, sans-serif;
+  letter-spacing: -0.03em;
+}

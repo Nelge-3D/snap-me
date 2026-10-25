@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkle } from "@/components/Sparkle";
+import { manrope, spaceGrotesk } from "@/lib/landingFonts";
 import {
   ExercisePhone,
   HomePhone,
@@ -106,17 +107,19 @@ const BUTTON_SECONDARY =
 function Wordmark({ className = "text-2xl" }: { className?: string }) {
   return (
     <span
-      className={`relative inline-block font-bold tracking-tight ${className}`}
+      className={`font-display inline-flex items-baseline font-bold ${className}`}
     >
-      Snap <span className="text-accent">Me</span>
-      <Sparkle className="absolute -right-3.5 -top-1.5 h-3.5 w-3.5 rotate-12 text-amber-400" />
+      snapme
+      <Sparkle className="ml-[0.06em] h-[0.55em] w-[0.55em] text-accent" />
     </span>
   );
 }
 
 export default function LandingPage() {
   return (
-    <div className="flex-1 overflow-x-clip">
+    <div
+      className={`landing ${spaceGrotesk.variable} ${manrope.variable} flex-1 overflow-x-clip`}
+    >
       <header className="sticky top-0 z-30 border-b border-surface-border/70 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
           <Link href="/" aria-label="Snap Me, accueil">
@@ -149,15 +152,17 @@ export default function LandingPage() {
             aria-hidden="true"
             className="pointer-events-none absolute -right-24 top-10 h-80 w-80 rounded-full bg-amber-300/20 blur-3xl"
           />
-          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-14 lg:grid-cols-2 lg:pt-20">
+          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-14 lg:grid-cols-[1.25fr_1fr] lg:pt-20">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
                 <Sparkle className="h-3 w-3 text-amber-500" />
                 Bientôt disponible
               </span>
-              <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-                Apprends l&apos;anglais{" "}
-                <span className="text-accent">avec ce que tu vois.</span>
+              <h1 className="mt-5 text-[clamp(2rem,4.3vw,3.2rem)] font-bold leading-[1.05]">
+                <span className="block">Apprends l&apos;anglais</span>
+                <span className="block text-balance text-accent lg:whitespace-nowrap">
+                  avec ce que tu vois.
+                </span>
               </h1>
               <p className="mt-5 max-w-lg text-lg text-muted">
                 Photographie ce qui t&apos;entoure au quotidien, découvre le
@@ -222,7 +227,7 @@ export default function LandingPage() {
             <p className="text-center text-xs font-semibold uppercase tracking-widest text-accent">
               Comment ça marche ?
             </p>
-            <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight">
+            <h2 className="mt-2 text-center text-3xl font-bold tracking-tight">
               3 étapes pour apprendre naturellement
             </h2>
             <ol className="mt-10 grid gap-8 md:grid-cols-3">
@@ -248,7 +253,7 @@ export default function LandingPage() {
           <p className="text-center text-xs font-semibold uppercase tracking-widest text-accent">
             Comment c&apos;est fait
           </p>
-          <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight">
+          <h2 className="mt-2 text-center text-3xl font-bold tracking-tight">
             Une IA ouverte, une voix dans ton navigateur
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-center text-muted">
@@ -282,7 +287,7 @@ export default function LandingPage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-accent">
                 Démo
               </p>
-              <h2 className="mt-2 text-3xl font-extrabold tracking-tight">
+              <h2 className="mt-2 text-3xl font-bold tracking-tight">
                 Découvre la démo de Snap Me
               </h2>
               <p className="mt-3 text-muted">
@@ -320,7 +325,7 @@ export default function LandingPage() {
           id="faq"
           className="mx-auto max-w-3xl scroll-mt-20 px-5 pb-16"
         >
-          <h2 className="text-center text-3xl font-extrabold tracking-tight">
+          <h2 className="text-center text-3xl font-bold tracking-tight">
             Questions fréquentes
           </h2>
           <div className="mt-8 divide-y divide-surface-border rounded-3xl border border-surface-border bg-white/70">

@@ -9,7 +9,7 @@ function Phone({
 }) {
   return (
     <div className={className}>
-      <div className="relative aspect-[9/18.5] w-[15.5rem] overflow-hidden rounded-[2.4rem] border-[6px] border-foreground bg-background shadow-2xl shadow-accent/20">
+      <div className="relative aspect-[9/18.5] w-[15.5rem] overflow-hidden font-sans rounded-[2.4rem] border-[6px] border-foreground bg-background shadow-2xl shadow-accent/20">
         <div className="absolute left-1/2 top-2 z-10 h-4 w-20 -translate-x-1/2 rounded-full bg-foreground" />
         <div className="flex h-full flex-col px-4 pb-4 pt-9">{children}</div>
       </div>
