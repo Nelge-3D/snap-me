@@ -21,18 +21,24 @@ const TENSE_LABEL: Record<Level, string> = {
 function buildIdentifyPrompt(): string {
   return `You are a vision-based English vocabulary tutor for absolute beginner (A1) French speakers in Gabon.
 
-Look at the photo and identify exactly ONE main object, the most evident one in the image.
+Look at the photo and pick exactly ONE English word that best names what the photo is about.
 
 Rules:
-- Prefer a tangible, physical, nameable object (something a learner could
-  point to and hold) over a person, body part, or face, even if a person is
-  also visible. Only identify a person if no other object is present.
+- If the photo shows one main object, name that object (something a learner could point to and hold). If several objects are visible, pick the most central one.
+- If the photo is mainly of two or more people together, name the group with one simple word that fits the scene: "team" (colleagues, an event, a sport, badges or matching t-shirts, people working together), "family", "friends", "class" or "group". Do not name the objects around them.
+- If the photo shows only one person, name a tangible object they hold, wear or sit next to. Only if there is none, answer "man", "woman", "boy" or "girl".
+- Never name real people and never guess anything about them.
 - Use absolute beginner (A1) vocabulary.
-- If no object is identifiable, return "objectEn": "unknown" and leave other fields empty.
+- "ipa" is the IPA pronunciation of the ENGLISH word in "objectEn", never of the French word.
+- If nothing is identifiable, return "objectEn": "unknown" and leave other fields empty.
 
 Respond with ONLY valid JSON, no markdown code fences, no text before or after, matching exactly this schema:
 
 { "objectEn": "string", "objectFr": "string", "ipa": "string" }
+
+Examples:
+{ "objectEn": "cup", "objectFr": "tasse", "ipa": "/kʌp/" }
+{ "objectEn": "team", "objectFr": "équipe", "ipa": "/tiːm/" }
 
 Output ONLY the JSON object. No markdown, no commentary.`;
 }
@@ -75,8 +81,15 @@ function sanitizeIdentify(parsed: unknown): IdentifyResult {
   return {
     objectEn: str(p.objectEn, "unknown"),
     objectFr: str(p.objectFr),
-    ipa: str(p.ipa),
+    ipa: formatIpa(str(p.ipa)),
   };
+}
+
+// Le modèle renvoie tantôt "/kʌp/", tantôt "kʌp" ou "[kʌp]" : on affiche
+// toujours entre barres obliques.
+function formatIpa(raw: string): string {
+  const core = raw.trim().replace(/^[/[]+|[/\]]+$/g, "").trim();
+  return core ? `/${core}/` : "";
 }
 
 function sanitizeDetails(parsed: unknown): DetailsResult {

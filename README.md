@@ -84,7 +84,7 @@ Ouvre [http://localhost:3000](http://localhost:3000) pour la landing, puis [/app
 
 - Pas de compte, pas de synchronisation entre appareils : la progression vit dans le navigateur utilisé.
 - Le carnet est plafonné à 50 snaps pour rester dans les limites raisonnables du `localStorage`.
-- Un seul objet est identifié par photo, même si plusieurs sont visibles.
+- Un seul mot est retenu par photo, même si plusieurs objets sont visibles : l'objet principal, ou un mot de groupe (« team », « family », « friends »...) quand la photo montre surtout des personnes ensemble.
 - La latence dépend de l'API Gemma 4. Mesurée avec le raisonnement interne minimal (`thinkingLevel: MINIMAL`) : environ 3 à 4 s pour identifier l'objet, puis 5 à 6 s pour les phrases et exercices. Elle peut varier selon la charge.
 - L'app est installable sur l'écran d'accueil (manifest PWA) mais n'a pas de mode hors ligne : il faut du réseau pour la charger et pour identifier un objet.
 
